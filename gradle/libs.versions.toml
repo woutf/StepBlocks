@@ -1,6 +1,6 @@
 [versions]
 activity-compose = "1.9.0"
-android-gradle-plugin = "8.4.1"
+android-gradle-plugin = "8.11.0"
 androidx-junit = "1.1.5"
 appcompat = "1.6.1"
 compose-bom = "2024.05.00"
