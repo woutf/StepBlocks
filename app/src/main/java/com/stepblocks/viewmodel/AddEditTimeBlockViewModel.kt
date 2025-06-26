@@ -76,7 +76,13 @@ class AddEditTimeBlockViewModel(
                 notifyMid = false,
                 notifyEnd = false
             )
-            repository.insertTimeBlock(timeBlock)
+
+            if (timeBlockId == null) {
+                repository.insertTimeBlock(timeBlock)
+            } else {
+                repository.updateTimeBlock(timeBlock)
+            }
+            
             _uiState.update { it.copy(isTimeBlockSaved = true) }
         }
     }

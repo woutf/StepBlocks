@@ -66,6 +66,9 @@ fun AppNavigation() {
                 templateId = templateId,
                 onNavigateToAdd = {
                     navController.navigate("add_edit_time_block/$templateId")
+                },
+                onNavigateToEdit = { timeBlockId ->
+                    navController.navigate("add_edit_time_block/$templateId?timeBlockId=$timeBlockId")
                 }
             )
         }

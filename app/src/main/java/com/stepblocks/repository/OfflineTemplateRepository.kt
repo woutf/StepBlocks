@@ -33,4 +33,8 @@ class OfflineTemplateRepository(private val db: AppDatabase) : TemplateRepositor
     override suspend fun insertTimeBlock(timeBlock: TimeBlock) {
         db.timeBlockDao().insertTimeBlock(timeBlock)
     }
+
+    override suspend fun updateTimeBlock(timeBlock: TimeBlock) {
+        db.timeBlockDao().updateTimeBlock(timeBlock)
+    }
 }

@@ -16,4 +16,5 @@ interface TemplateRepository {
     fun getTimeBlocksForTemplate(templateId: Long): Flow<List<TimeBlock>>
     suspend fun getTimeBlockById(id: Long): TimeBlock?
     suspend fun insertTimeBlock(timeBlock: TimeBlock)
+    suspend fun updateTimeBlock(timeBlock: TimeBlock)
 }

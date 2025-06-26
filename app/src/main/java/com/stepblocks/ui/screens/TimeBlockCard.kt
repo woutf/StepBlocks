@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TimeBlockCard(
     timeBlock: TimeBlock,
-    onEdit: () -> Unit,
+    onEdit: (Long) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -62,7 +62,7 @@ fun TimeBlockCard(
                 )
             }
             Row {
-                IconButton(onClick = onEdit) {
+                IconButton(onClick = { onEdit(timeBlock.id) }) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Time Block")
                 }
                 IconButton(onClick = onDelete) {

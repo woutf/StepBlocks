@@ -152,6 +152,12 @@ private class FakeTemplateRepository : TemplateRepository {
     override suspend fun insertTimeBlock(timeBlock: TimeBlock) {
         fakeTimeBlocks.update { it + timeBlock }
     }
+
+    override suspend fun updateTimeBlock(timeBlock: TimeBlock) {
+        fakeTimeBlocks.update { blocks ->
+            blocks.map { if (it.id == timeBlock.id) timeBlock else it }
+        }
+    }
 }
 
 @Preview(showBackground = true)

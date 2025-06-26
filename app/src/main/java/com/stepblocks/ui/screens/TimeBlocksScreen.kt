@@ -25,7 +25,8 @@ import java.time.LocalTime
 fun TimeBlocksScreen(
     templateId: Long,
     viewModel: ITimeBlocksViewModel = viewModel<TimeBlocksViewModel>(factory = TimeBlocksViewModelFactory(templateId)),
-    onNavigateToAdd: () -> Unit
+    onNavigateToAdd: () -> Unit,
+    onNavigateToEdit: (Long) -> Unit
 ) {
     val timeBlocks by viewModel.timeBlocks.collectAsState()
 
@@ -49,7 +50,7 @@ fun TimeBlocksScreen(
             items(timeBlocks) { timeBlock ->
                 TimeBlockCard(
                     timeBlock = timeBlock,
-                    onEdit = { /* TODO */ },
+                    onEdit = { onNavigateToEdit(timeBlock.id) },
                     onDelete = { /* TODO */ }
                 )
             }
@@ -77,6 +78,7 @@ fun TimeBlocksScreenPreview() {
     TimeBlocksScreen(
         templateId = 1L,
         viewModel = fakeViewModel,
-        onNavigateToAdd = {}
+        onNavigateToAdd = {},
+        onNavigateToEdit = {}
     )
 }
