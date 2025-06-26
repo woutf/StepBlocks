@@ -1,0 +1,239 @@
+Perfect! Based on your answers, here's a tailored approach for an AI-assisted development process:
+
+## Adjusted Development Strategy for AI-Assisted WearOS Development
+
+### Pre-Development Setup (Week 1)
+
+**Task 1: Environment Setup**
+```
+AI Prompt: "Create a step-by-step guide for setting up a new WearOS project in Android Studio with:
+- Phone app module
+- Watch app module  
+- Shared module for data models
+- Minimum SDK versions for Pixel Watch compatibility"
+```
+
+**Task 2: Basic Project Structure**
+```
+AI Prompt: "Generate the initial project structure for a WearOS app called StepBlocks with:
+- Gradle files configured for phone and watch modules
+- Basic manifest files
+- Dependencies for Room database, Health Services API, and DataLayer API"
+```
+
+### Phase 1: Data Models & Database (Week 2-3)
+
+Start with data because AI can generate this very reliably.
+
+**Segment 1.1: Core Data Models**
+```
+AI Prompt: "Create Kotlin data classes for StepBlocks app:
+- TimeBlock (name, startTime, endTime, targetSteps, notifyStart, notifyMid, notifyEnd)
+- Template (id, name, timeBlocks list)
+- DayAssignment (dayOfWeek, templateId)
+- Use Room database annotations"
+```
+
+**Segment 1.2: Database Setup**
+```
+AI Prompt: "Create a Room database for StepBlocks with:
+- DAOs for Template CRUD operations
+- TypeConverters for Time and List<TimeBlock>
+- Database singleton with pre-populated example template
+- Basic unit tests for database operations"
+```
+
+### Phase 2: Phone App - Template Management (Week 4-6)
+
+Phone app first (contrary to my earlier advice) because you need it to create templates.
+
+**Segment 2.1: Basic Phone UI**
+```
+AI Prompt: "Create a simple Android activity with:
+- RecyclerView showing list of templates
+- Floating action button to add template
+- Each item shows template name and total steps
+- Use Material Design 3 components"
+```
+
+**Segment 2.2: Template Creation**
+```
+AI Prompt: "Create template creation screen with:
+- Text input for template name
+- RecyclerView for time blocks
+- Add Block button that adds consecutive blocks
+- Each block shows time range and step target
+- Save button that validates and saves to database"
+```
+
+**Segment 2.3: Time Block Editor**
+```
+AI Prompt: "Create a dialog/screen for editing time blocks with:
+- Time pickers for start/end time
+- Number input for steps
+- Three checkboxes for notifications
+- Validation to prevent overlapping blocks"
+```
+
+### Phase 3: Basic Watch App (Week 7-8)
+
+**Segment 3.1: Watch Data Layer**
+```
+AI Prompt: "Create WearOS data layer sync for StepBlocks:
+- Send templates from phone to watch
+- Store received templates in watch local storage
+- Handle connection state changes
+- Basic error handling"
+```
+
+**Segment 3.2: Watch UI - Now Screen**
+```
+AI Prompt: "Create main WearOS activity showing:
+- Current time block name
+- Circular progress indicator
+- Step count (hardcoded for now)
+- Target steps for current block
+- Use Wear Compose UI"
+```
+
+### Phase 4: Step Counting Integration (Week 9-10)
+
+**Segment 4.1: Health Services**
+```
+AI Prompt: "Integrate WearOS Health Services for step counting:
+- Request permissions in manifest
+- Create service to read daily steps
+- Calculate steps within current time block
+- Handle permission requests"
+```
+
+**Segment 4.2: Progress Tracking**
+```
+AI Prompt: "Create progress tracking logic:
+- Calculate current block based on time
+- Track steps per block throughout day
+- Store progress in local database
+- Reset at midnight"
+```
+
+### Phase 5: Notifications (Week 11-12)
+
+**Segment 5.1: Notification Logic**
+```
+AI Prompt: "Create notification system for WearOS:
+- Schedule notifications at block start/mid/end times
+- Calculate if user is behind pace at midpoint
+- Use custom vibration patterns
+- Only send if notification is enabled for block"
+```
+
+### Phase 6: History & Polish (Week 13-14)
+
+**Segment 6.1: History Storage**
+```
+AI Prompt: "Add history tracking:
+- Save daily progress to database
+- Sync history from watch to phone
+- Show history in phone app calendar view
+- Calculate completion percentages"
+```
+
+## AI Prompt Engineering Tips
+
+### 1. Code Generation Strategy
+
+**Good Prompt Structure:**
+```
+"Create a [specific component] for [app name] that:
+- [Specific requirement 1]
+- [Specific requirement 2]
+- [Specific requirement 3]
+Use [specific technology/library]
+Include error handling and comments"
+```
+
+### 2. Iterative Refinement
+
+**Step 1:** Generate basic code
+```
+"Create a basic WearOS activity that displays 'Hello World'"
+```
+
+**Step 2:** Add functionality
+```
+"Modify the activity to show current time and a step count variable"
+```
+
+**Step 3:** Integrate real data
+```
+"Update to read actual steps from Health Services API"
+```
+
+### 3. Testing Each Component
+
+**For each major component:**
+```
+"Create a simple test to verify:
+- [Component] correctly [does specific thing]
+- Handles [edge case]
+- Include manual testing instructions"
+```
+
+## Simplified Architecture for Beginners
+
+### 1. Skip Complex Patterns
+- No MVVM/MVI initially (add later)
+- Direct database access from activities
+- Simple callbacks instead of Flow/LiveData
+- Minimal abstraction layers
+
+### 2. File Organization
+```
+/phone
+  MainActivity.kt           # Template list
+  CreateTemplateActivity.kt # Template creation
+  TemplateDatabase.kt      # Room database
+  Models.kt               # Data classes
+
+/watch  
+  MainActivity.kt         # Now screen
+  DataSyncService.kt     # Receive templates
+  StepCounterService.kt  # Count steps
+  NotificationService.kt # Send notifications
+
+/shared
+  TimeCalculations.kt    # Shared logic
+```
+
+### 3. Development Checkpoints
+
+**After each phase, you should have:**
+- Working APK you can install
+- One specific feature working end-to-end
+- Code you understand (ask AI to explain)
+- Basic manual test to verify it works
+
+## Week-by-Week AI Prompts
+
+**Week 1:** 
+- "Create new Android Studio project with phone and watch modules"
+- "Add Room database dependencies to both modules"
+
+**Week 2:**
+- "Create Room entities for TimeBlock and Template"
+- "Create DAO with insertTemplate and getAllTemplates"
+
+**Week 3:**
+- "Create MainActivity with RecyclerView for templates"
+- "Add click handling to open template creation"
+
+[Continue for each week...]
+
+## Common Pitfalls to Avoid
+
+1. **Don't try to generate entire app at once** - AI works better with specific, focused requests
+2. **Test after each generation** - Don't stack untested code
+3. **Keep prompts simple** - Complex prompts lead to complex code
+4. **Save working versions** - Use git after each working feature
+
+Would you like me to create the specific Week 1 prompts to get you started? Or would you prefer to see a complete prompt example for any particular component?
