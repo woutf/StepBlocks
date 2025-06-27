@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.stepblocks.viewmodel.AddEditTimeBlockViewModel
@@ -23,7 +25,7 @@ private enum class PickerDialog {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditTimeBlockScreenWithPicker(
+fun AddEditTimeBlockScreen(
     navController: NavController,
     viewModel: AddEditTimeBlockViewModel
 ) {
@@ -138,6 +140,13 @@ fun AddEditTimeBlockScreenWithPicker(
                         dialogToShow = PickerDialog.END_TIME
                     })
             }
+            OutlinedTextField(
+                value = uiState.targetSteps,
+                onValueChange = { viewModel.onTargetStepsChange(it) },
+                label = { Text("Target Steps") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

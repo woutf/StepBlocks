@@ -17,6 +17,7 @@ data class AddEditTimeBlockUiState(
     val name: String = "",
     val startTime: String = "",
     val endTime: String = "",
+    val targetSteps: String = "", // Add targetSteps to UI state
     val isTimeBlockSaved: Boolean = false,
     val isEditing: Boolean = false
 )
@@ -42,6 +43,7 @@ class AddEditTimeBlockViewModel(
                             name = timeBlock.name,
                             startTime = timeBlock.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
                             endTime = timeBlock.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                            targetSteps = timeBlock.targetSteps.toString(), // Load existing steps
                             isEditing = true
                         )
                     }
@@ -62,16 +64,26 @@ class AddEditTimeBlockViewModel(
         _uiState.update { it.copy(endTime = endTime) }
     }
 
+    // Function to handle changes from the TextField
+    fun onTargetStepsChange(steps: String) {
+        if (steps.all { it.isDigit() }) { // Basic validation
+            _uiState.update { it.copy(targetSteps = steps) }
+        }
+    }
+
     fun saveTimeBlock() {
         viewModelScope.launch {
             val currentState = _uiState.value
+            // Use the value from the state, defaulting to 0 if empty
+            val steps = currentState.targetSteps.toIntOrNull() ?: 0
+
             val timeBlock = TimeBlock(
                 id = timeBlockId ?: 0,
                 templateId = templateId,
                 name = currentState.name,
                 startTime = LocalTime.parse(currentState.startTime),
                 endTime = LocalTime.parse(currentState.endTime),
-                targetSteps = 1000, // Default value
+                targetSteps = steps, // Save the actual steps
                 notifyStart = false,
                 notifyMid = false,
                 notifyEnd = false

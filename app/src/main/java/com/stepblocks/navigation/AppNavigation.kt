@@ -11,7 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.stepblocks.StepBlocksApplication
 import com.stepblocks.ui.screens.AddEditTemplateScreen
-import com.stepblocks.ui.screens.AddEditTimeBlockScreenWithPicker
+import com.stepblocks.ui.screens.AddEditTimeBlockScreen
 import com.stepblocks.ui.screens.TemplatesScreen
 import com.stepblocks.ui.screens.TimeBlocksScreen
 import com.stepblocks.viewmodel.AddEditTemplateViewModelFactory
@@ -82,7 +82,7 @@ fun AppNavigation() {
                 }
             )
         ) { backStackEntry ->
-            AddEditTimeBlockScreenWithPicker(
+            AddEditTimeBlockScreen(
                 navController = navController,
                 viewModel = viewModel(
                     factory = AddEditTimeBlockViewModelFactory(
