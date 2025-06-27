@@ -2,6 +2,7 @@
 package com.stepblocks.repository
 
 import com.stepblocks.data.Template
+import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import kotlinx.coroutines.flow.Flow
 
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface TemplateRepository {
     fun getAllTemplates(): Flow<List<Template>>
+    fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks>
     suspend fun getTemplateById(id: Long): Template?
     suspend fun insertTemplate(template: Template)
     suspend fun deleteTemplate(template: Template)

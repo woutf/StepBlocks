@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.stepblocks.data.Template
+import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.repository.TemplateRepository
 import com.stepblocks.ui.theme.StepBlocksTheme
@@ -122,6 +123,12 @@ private class FakeTemplateRepository : TemplateRepository {
 
     override suspend fun getTemplateById(id: Long): Template? =
         fakeTemplates.value.find { it.id == id }
+
+    override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks> {
+        val template = fakeTemplates.value.find { it.id == id }
+        val timeBlocks = fakeTimeBlocks.value.filter { it.templateId == id }
+        return flowOf(TemplateWithTimeBlocks(template!!, timeBlocks))
+    }
 
     override suspend fun insertTemplate(template: Template) {
         fakeTemplates.update {

@@ -9,14 +9,17 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.stepblocks.StepBlocksApplication
+import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.repository.TemplateRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 interface ITimeBlocksViewModel {
+    val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?>
     val timeBlocks: StateFlow<List<TimeBlock>>
     fun deleteTimeBlock(timeBlock: TimeBlock)
 }
@@ -28,8 +31,16 @@ class TimeBlocksViewModel(
 
     private val templateId: Long = checkNotNull(savedStateHandle["templateId"])
 
+    override val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?> =
+        repository.getTemplateWithTimeBlocks(templateId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = null
+            )
+
     override val timeBlocks: StateFlow<List<TimeBlock>> =
-        repository.getTimeBlocksForTemplate(templateId)
+        templateWithTimeBlocks.map { it?.timeBlocks ?: emptyList() }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),

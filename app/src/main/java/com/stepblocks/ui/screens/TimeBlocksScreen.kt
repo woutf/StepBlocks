@@ -1,3 +1,4 @@
+
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.stepblocks.viewmodel.ITimeBlocksViewModel
 import com.stepblocks.viewmodel.TimeBlocksViewModel
 import com.stepblocks.viewmodel.TimeBlocksViewModelFactory
+import com.stepblocks.data.Template
+import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,9 +29,13 @@ fun TimeBlocksScreen(
     onNavigateToAdd: () -> Unit,
     onNavigateToEdit: (Long) -> Unit
 ) {
+    val templateWithTimeBlocks by viewModel.templateWithTimeBlocks.collectAsState()
     val timeBlocks by viewModel.timeBlocks.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var timeBlockToDelete by remember { mutableStateOf<TimeBlock?>(null) }
+    val totalSteps = remember(timeBlocks) {
+        timeBlocks.sumOf { it.targetSteps }
+    }
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -61,7 +68,10 @@ fun TimeBlocksScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Time Blocks") },
+                title = { Text(templateWithTimeBlocks?.template?.name ?: "Time Blocks") },
+                actions = {
+                    Text(text = "Total: $totalSteps steps")
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -91,12 +101,21 @@ fun TimeBlocksScreen(
 
 // Preview using a fake ViewModel that implements the interface
 class FakeTimeBlocksViewModel(
-    fakeTimeBlocks: List<TimeBlock>
+    fakeTemplateWithTimeBlocks: TemplateWithTimeBlocks?
 ) : ITimeBlocksViewModel {
-    private val _timeBlocks = MutableStateFlow(fakeTimeBlocks)
+    private val _templateWithTimeBlocks = MutableStateFlow(fakeTemplateWithTimeBlocks)
+    override val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?> = _templateWithTimeBlocks
+
+    private val _timeBlocks = MutableStateFlow(fakeTemplateWithTimeBlocks?.timeBlocks ?: emptyList())
     override val timeBlocks: StateFlow<List<TimeBlock>> = _timeBlocks
+
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
-        _timeBlocks.value = _timeBlocks.value.filterNot { it.id == timeBlock.id }
+        val currentTemplateWithTimeBlocks = _templateWithTimeBlocks.value
+        if (currentTemplateWithTimeBlocks != null) {
+            val updatedBlocks = currentTemplateWithTimeBlocks.timeBlocks.filterNot { it.id == timeBlock.id }
+            _templateWithTimeBlocks.value = currentTemplateWithTimeBlocks.copy(timeBlocks = updatedBlocks)
+            _timeBlocks.value = updatedBlocks
+        }
     }
 }
 
@@ -108,7 +127,9 @@ fun TimeBlocksScreenPreview() {
         TimeBlock(2, 1L, "Lunch Break Walk", LocalTime.of(12, 30), LocalTime.of(13, 0), 500, false, true, false),
         TimeBlock(3, 1L, "Evening Power Walk", LocalTime.of(18, 0), LocalTime.of(18, 30), 2000, true, true, true)
     )
-    val fakeViewModel = FakeTimeBlocksViewModel(dummyTimeBlocks)
+    val dummyTemplate = Template(1, "Weekday")
+    val dummyTemplateWithTimeBlocks = TemplateWithTimeBlocks(dummyTemplate, dummyTimeBlocks)
+    val fakeViewModel = FakeTimeBlocksViewModel(dummyTemplateWithTimeBlocks)
     TimeBlocksScreen(
         templateId = 1L,
         viewModel = fakeViewModel,
