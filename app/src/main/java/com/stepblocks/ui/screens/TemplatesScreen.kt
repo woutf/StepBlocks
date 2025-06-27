@@ -34,6 +34,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import java.time.LocalTime
+import androidx.compose.material3.TopAppBarDefaults // Import TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme // Add this import
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +79,13 @@ fun TemplatesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Templates") })
+            TopAppBar(
+                title = { Text("Templates") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary
+                )
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddTemplate) {

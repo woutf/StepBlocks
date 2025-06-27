@@ -1,4 +1,3 @@
-
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.clickable
@@ -100,17 +99,22 @@ fun AddEditTimeBlockScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.saveTimeBlock() }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save Time Block")
+                    TextButton(onClick = { viewModel.saveTimeBlock() }) { // CHANGE HERE: IconButton to TextButton
+                        Text("Done") // CHANGE HERE: Icon to Text
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp), // Adjusted padding for consistency
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(

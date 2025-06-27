@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.stepblocks.viewmodel.AddEditTemplateViewModel
+import androidx.compose.material3.TopAppBarDefaults // Import TopAppBarDefaults
+import androidx.compose.material3.TextButton // ADD THIS IMPORT
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,13 +41,18 @@ fun AddEditTemplateScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
+                    TextButton(onClick = { // CHANGE HERE: IconButton to TextButton
                         viewModel.saveTemplate()
                         navController.popBackStack()
                     }) {
-                        Icon(Icons.Filled.Check, contentDescription = "Save Template")
+                        Text("Save") // CHANGE HERE: Icon to Text
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     ) { innerPadding ->
@@ -53,7 +60,7 @@ fun AddEditTemplateScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp) // Adjusted padding for consistency
         ) {
             OutlinedTextField(
                 value = templateName,
@@ -61,11 +68,11 @@ fun AddEditTemplateScreen(
                 label = { Text("Template Name") },
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Text(
                 text = "Time Blocks",
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp) // Keep current padding for now, might adjust later when time blocks are added
             )
         }
     }

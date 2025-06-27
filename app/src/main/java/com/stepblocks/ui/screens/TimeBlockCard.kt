@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.dp
 import com.stepblocks.data.TimeBlock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.CardDefaults // ADD THIS IMPORT
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeBlockCard(
     timeBlock: TimeBlock,
@@ -33,10 +36,12 @@ fun TimeBlockCard(
 ) {
     val formatter = DateTimeFormatter.ofPattern("h:mm a")
 
-    Card(
+    ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .clickable { onEdit(timeBlock.id) },
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp) // CORRECTED LINE
     ) {
         Row(
             modifier = Modifier
@@ -61,13 +66,8 @@ fun TimeBlockCard(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            Row {
-                IconButton(onClick = { onEdit(timeBlock.id) }) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Time Block")
-                }
-                IconButton(onClick = onDelete) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Time Block")
-                }
+            IconButton(onClick = onDelete) {
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Time Block")
             }
         }
     }
