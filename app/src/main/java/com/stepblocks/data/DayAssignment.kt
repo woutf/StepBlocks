@@ -1,23 +1,10 @@
 package com.stepblocks.data
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
+import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "day_assignments",
-    primaryKeys = ["dayOfWeek"],
-    foreignKeys = [
-        ForeignKey(
-            entity = Template::class,
-            parentColumns = ["id"],
-            childColumns = ["templateId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["templateId"])]
-)
+@Entity(primaryKeys = ["templateId", "dayOfWeek"])
 data class DayAssignment(
-    val dayOfWeek: Int, // 0=Sunday, 6=Saturday
-    val templateId: Long
+    val templateId: Long,
+    val dayOfWeek: Int // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
 )

@@ -1,6 +1,7 @@
 
 package com.stepblocks.repository
 
+import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -21,4 +22,9 @@ interface TemplateRepository {
     suspend fun insertTimeBlock(timeBlock: TimeBlock)
     suspend fun updateTimeBlock(timeBlock: TimeBlock)
     suspend fun deleteTimeBlock(timeBlock: TimeBlock)
+
+    // DayAssignment functions
+    fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>>
+    suspend fun insertDayAssignment(dayAssignment: DayAssignment)
+    suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: Int)
 }

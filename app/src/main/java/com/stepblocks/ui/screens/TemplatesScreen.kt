@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -120,7 +121,6 @@ private class FakeTemplateRepository : TemplateRepository {
         )
     )
 
-
     override fun getAllTemplates(): Flow<List<Template>> = fakeTemplates
 
     override fun getAllTemplatesWithTimeBlocks(): Flow<List<TemplateWithTimeBlocks>> {
@@ -182,6 +182,19 @@ private class FakeTemplateRepository : TemplateRepository {
         fakeTimeBlocks.update {
             it.filterNot { t -> t.id == timeBlock.id }
         }
+    }
+
+    override fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>> {
+        // Dummy implementation for preview
+        return flowOf(emptyList())
+    }
+
+    override suspend fun insertDayAssignment(dayAssignment: DayAssignment) {
+        // Dummy implementation for preview
+    }
+
+    override suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: Int) {
+        // Dummy implementation for preview
     }
 }
 

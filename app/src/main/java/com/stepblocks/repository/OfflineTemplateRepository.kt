@@ -2,6 +2,7 @@
 package com.stepblocks.repository
 
 import com.stepblocks.data.AppDatabase
+import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -48,4 +49,10 @@ class OfflineTemplateRepository(private val db: AppDatabase) : TemplateRepositor
     override suspend fun deleteTimeBlock(timeBlock: TimeBlock) {
         db.timeBlockDao().deleteTimeBlock(timeBlock)
     }
+
+    override fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>> = db.dayAssignmentDao().getDayAssignmentsForTemplate(templateId)
+
+    override suspend fun insertDayAssignment(dayAssignment: DayAssignment) = db.dayAssignmentDao().insertDayAssignment(dayAssignment)
+
+    override suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: Int) = db.dayAssignmentDao().deleteDayAssignment(templateId, dayOfWeek)
 }

@@ -1,25 +1,40 @@
 
 package com.stepblocks.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.stepblocks.viewmodel.ITimeBlocksViewModel
-import com.stepblocks.viewmodel.TimeBlocksViewModel
-import com.stepblocks.viewmodel.TimeBlocksViewModelFactory
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
+import com.stepblocks.viewmodel.ITimeBlocksViewModel
+import com.stepblocks.viewmodel.TimeBlocksViewModel
+import com.stepblocks.viewmodel.TimeBlocksViewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import java.time.LocalTime
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +46,7 @@ fun TimeBlocksScreen(
 ) {
     val templateWithTimeBlocks by viewModel.templateWithTimeBlocks.collectAsState()
     val timeBlocks by viewModel.timeBlocks.collectAsState()
+    val assignedDays by viewModel.assignedDays.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var timeBlockToDelete by remember { mutableStateOf<TimeBlock?>(null) }
     val totalSteps = remember(timeBlocks) {
@@ -95,6 +111,45 @@ fun TimeBlocksScreen(
                     }
                 )
             }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Assign to Days",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+                    val dayMapping = listOf(1, 2, 3, 4, 5, 6, 0) // Mon=1, Tue=2,..., Sun=0
+
+                    for (i in 0..6) {
+                        val dayOfWeekAppIndex = dayMapping[i]
+                        val isAssigned = assignedDays.contains(dayOfWeekAppIndex)
+
+                        OutlinedButton(
+                            onClick = { viewModel.toggleDayAssignment(dayOfWeekAppIndex) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, if (isAssigned) Color.Transparent else MaterialTheme.colorScheme.outline),
+                            contentPadding = PaddingValues(0.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (isAssigned) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                contentColor = if (isAssigned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Text(dayLabels[i])
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -109,12 +164,25 @@ class FakeTimeBlocksViewModel(
     private val _timeBlocks = MutableStateFlow(fakeTemplateWithTimeBlocks?.timeBlocks ?: emptyList())
     override val timeBlocks: StateFlow<List<TimeBlock>> = _timeBlocks
 
+    private val _assignedDays = MutableStateFlow(setOf<Int>(0, 1)) // Dummy assigned days: Sunday, Monday
+    override val assignedDays: StateFlow<Set<Int>> = _assignedDays
+
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         val currentTemplateWithTimeBlocks = _templateWithTimeBlocks.value
         if (currentTemplateWithTimeBlocks != null) {
             val updatedBlocks = currentTemplateWithTimeBlocks.timeBlocks.filterNot { it.id == timeBlock.id }
             _templateWithTimeBlocks.value = currentTemplateWithTimeBlocks.copy(timeBlocks = updatedBlocks)
             _timeBlocks.value = updatedBlocks
+        }
+    }
+
+    override fun toggleDayAssignment(dayOfWeek: Int) {
+        _assignedDays.update { currentDays ->
+            if (currentDays.contains(dayOfWeek)) {
+                currentDays - dayOfWeek
+            } else {
+                currentDays + dayOfWeek
+            }
         }
     }
 }

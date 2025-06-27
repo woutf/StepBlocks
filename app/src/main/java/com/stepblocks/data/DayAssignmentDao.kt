@@ -5,13 +5,15 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
-import java.time.DayOfWeek
 
 @Dao
 interface DayAssignmentDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(dayAssignment: DayAssignment)
+    @Query("SELECT * FROM DayAssignment WHERE templateId = :templateId")
+    fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>>
 
-    @Query("SELECT * FROM day_assignments WHERE dayOfWeek = :dayOfWeek")
-    fun getTemplateForDay(dayOfWeek: DayOfWeek): Flow<DayAssignment?>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDayAssignment(dayAssignment: DayAssignment)
+
+    @Query("DELETE FROM DayAssignment WHERE templateId = :templateId AND dayOfWeek = :dayOfWeek")
+    suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: Int)
 }

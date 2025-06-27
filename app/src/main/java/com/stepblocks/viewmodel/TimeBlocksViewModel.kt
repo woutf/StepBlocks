@@ -1,4 +1,3 @@
-
 package com.stepblocks.viewmodel
 
 import android.app.Application
@@ -9,6 +8,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.stepblocks.StepBlocksApplication
+import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.repository.TemplateRepository
@@ -21,7 +21,9 @@ import kotlinx.coroutines.launch
 interface ITimeBlocksViewModel {
     val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?>
     val timeBlocks: StateFlow<List<TimeBlock>>
+    val assignedDays: StateFlow<Set<Int>>
     fun deleteTimeBlock(timeBlock: TimeBlock)
+    fun toggleDayAssignment(dayOfWeek: Int)
 }
 
 class TimeBlocksViewModel(
@@ -47,9 +49,28 @@ class TimeBlocksViewModel(
                 initialValue = emptyList()
             )
 
+    override val assignedDays: StateFlow<Set<Int>> = 
+        repository.getDayAssignmentsForTemplate(templateId)
+            .map { assignments -> assignments.map { it.dayOfWeek }.toSet() }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptySet()
+            )
+
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         viewModelScope.launch {
             repository.deleteTimeBlock(timeBlock)
+        }
+    }
+
+    override fun toggleDayAssignment(dayOfWeek: Int) {
+        viewModelScope.launch {
+            if (assignedDays.value.contains(dayOfWeek)) {
+                repository.deleteDayAssignment(templateId, dayOfWeek)
+            } else {
+                repository.insertDayAssignment(DayAssignment(templateId = templateId, dayOfWeek = dayOfWeek))
+            }
         }
     }
 }
