@@ -1,4 +1,3 @@
-
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.layout.padding
@@ -156,6 +155,12 @@ private class FakeTemplateRepository : TemplateRepository {
     override suspend fun updateTimeBlock(timeBlock: TimeBlock) {
         fakeTimeBlocks.update { blocks ->
             blocks.map { if (it.id == timeBlock.id) timeBlock else it }
+        }
+    }
+
+    override suspend fun deleteTimeBlock(timeBlock: TimeBlock) {
+        fakeTimeBlocks.update {
+            it.filterNot { t -> t.id == timeBlock.id }
         }
     }
 }

@@ -2,6 +2,7 @@
 package com.stepblocks.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -21,4 +22,7 @@ interface TimeBlockDao {
 
     @Update
     suspend fun updateTimeBlock(timeBlock: TimeBlock)
+
+    @Delete
+    suspend fun deleteTimeBlock(timeBlock: TimeBlock)
 }

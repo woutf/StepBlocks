@@ -14,9 +14,11 @@ import com.stepblocks.repository.TemplateRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 interface ITimeBlocksViewModel {
     val timeBlocks: StateFlow<List<TimeBlock>>
+    fun deleteTimeBlock(timeBlock: TimeBlock)
 }
 
 class TimeBlocksViewModel(
@@ -33,6 +35,12 @@ class TimeBlocksViewModel(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
+
+    override fun deleteTimeBlock(timeBlock: TimeBlock) {
+        viewModelScope.launch {
+            repository.deleteTimeBlock(timeBlock)
+        }
+    }
 }
 
 class TimeBlocksViewModelFactory(
@@ -40,9 +48,8 @@ class TimeBlocksViewModelFactory(
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as StepBlocksApplication
-        val repository = application.repository // Corrected property name
+        val repository = application.repository
         val savedStateHandle = extras.createSavedStateHandle()
-        // Manually add templateId to savedStateHandle
         savedStateHandle["templateId"] = templateId
 
         if (modelClass.isAssignableFrom(TimeBlocksViewModel::class.java)) {

@@ -17,4 +17,5 @@ interface TemplateRepository {
     suspend fun getTimeBlockById(id: Long): TimeBlock?
     suspend fun insertTimeBlock(timeBlock: TimeBlock)
     suspend fun updateTimeBlock(timeBlock: TimeBlock)
+    suspend fun deleteTimeBlock(timeBlock: TimeBlock)
 }

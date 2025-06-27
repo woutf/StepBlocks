@@ -6,9 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,6 +27,36 @@ fun TimeBlocksScreen(
     onNavigateToEdit: (Long) -> Unit
 ) {
     val timeBlocks by viewModel.timeBlocks.collectAsState()
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var timeBlockToDelete by remember { mutableStateOf<TimeBlock?>(null) }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteConfirmation = false
+                timeBlockToDelete = null
+            },
+            title = { Text("Delete Time Block") },
+            text = { Text("Are you sure you want to delete '${timeBlockToDelete?.name}'?") },
+            confirmButton = {
+                Button(onClick = {
+                    timeBlockToDelete?.let { viewModel.deleteTimeBlock(it) }
+                    showDeleteConfirmation = false
+                    timeBlockToDelete = null
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    showDeleteConfirmation = false
+                    timeBlockToDelete = null
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -36,7 +64,7 @@ fun TimeBlocksScreen(
                 title = { Text("Time Blocks") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
@@ -51,7 +79,10 @@ fun TimeBlocksScreen(
                 TimeBlockCard(
                     timeBlock = timeBlock,
                     onEdit = { onNavigateToEdit(timeBlock.id) },
-                    onDelete = { /* TODO */ }
+                    onDelete = {
+                        timeBlockToDelete = timeBlock
+                        showDeleteConfirmation = true
+                    }
                 )
             }
         }
@@ -64,6 +95,9 @@ class FakeTimeBlocksViewModel(
 ) : ITimeBlocksViewModel {
     private val _timeBlocks = MutableStateFlow(fakeTimeBlocks)
     override val timeBlocks: StateFlow<List<TimeBlock>> = _timeBlocks
+    override fun deleteTimeBlock(timeBlock: TimeBlock) {
+        _timeBlocks.value = _timeBlocks.value.filterNot { it.id == timeBlock.id }
+    }
 }
 
 @Preview(showBackground = true)
