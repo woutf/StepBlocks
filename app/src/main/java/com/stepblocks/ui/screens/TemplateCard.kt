@@ -24,6 +24,7 @@ import com.stepblocks.data.Template
 @Composable
 fun TemplateCard(
     template: Template,
+    totalSteps: Int,
     onCardClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -40,8 +41,7 @@ fun TemplateCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = template.name, style = MaterialTheme.typography.titleLarge)
-                // TODO: Display total steps
-                // TODO: Display assigned days
+                Text(text = "Total Steps: $totalSteps", style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onEdit) {
                 Icon(Icons.Filled.Edit, contentDescription = "Edit Template")

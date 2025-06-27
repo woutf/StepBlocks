@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.stepblocks.data.Template
+import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.repository.TemplateRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class TemplateViewModel(private val repository: TemplateRepository) : ViewModel() {
 
-    val templates: StateFlow<List<Template>> = repository.getAllTemplates()
+    val templates: StateFlow<List<TemplateWithTimeBlocks>> = repository.getAllTemplatesWithTimeBlocks()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

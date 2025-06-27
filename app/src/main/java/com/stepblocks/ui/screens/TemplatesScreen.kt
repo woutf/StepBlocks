@@ -42,7 +42,7 @@ fun TemplatesScreen(
     onAddTemplate: () -> Unit,
     onEditTemplate: (Long) -> Unit
 ) {
-    val templates by viewModel.templates.collectAsState()
+    val templatesWithTimeBlocks by viewModel.templates.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var templateToDelete by remember { mutableStateOf<Template?>(null) }
 
@@ -86,15 +86,17 @@ fun TemplatesScreen(
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
             items(
-                items = templates,
-                key = { it.id }
-            ) { template ->
+                items = templatesWithTimeBlocks,
+                key = { it.template.id }
+            ) { templateWithTimeBlocks ->
+                val totalSteps = templateWithTimeBlocks.timeBlocks.sumOf { it.targetSteps }
                 TemplateCard(
-                    template = template,
-                    onCardClick = { onTemplateClick(template.id) },
-                    onEdit = { onEditTemplate(template.id) },
+                    template = templateWithTimeBlocks.template,
+                    totalSteps = totalSteps,
+                    onCardClick = { onTemplateClick(templateWithTimeBlocks.template.id) },
+                    onEdit = { onEditTemplate(templateWithTimeBlocks.template.id) },
                     onDelete = {
-                        templateToDelete = template
+                        templateToDelete = templateWithTimeBlocks.template
                         showDeleteConfirmation = true
                     }
                 )
@@ -120,6 +122,17 @@ private class FakeTemplateRepository : TemplateRepository {
 
 
     override fun getAllTemplates(): Flow<List<Template>> = fakeTemplates
+
+    override fun getAllTemplatesWithTimeBlocks(): Flow<List<TemplateWithTimeBlocks>> {
+        return flowOf(
+            fakeTemplates.value.map { template ->
+                TemplateWithTimeBlocks(
+                    template = template,
+                    timeBlocks = fakeTimeBlocks.value.filter { it.templateId == template.id }
+                )
+            }
+        )
+    }
 
     override suspend fun getTemplateById(id: Long): Template? =
         fakeTemplates.value.find { it.id == id }

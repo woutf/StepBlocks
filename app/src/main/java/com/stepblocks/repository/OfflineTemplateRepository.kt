@@ -15,6 +15,8 @@ class OfflineTemplateRepository(private val db: AppDatabase) : TemplateRepositor
 
     override fun getAllTemplates(): Flow<List<Template>> = db.templateDao().getAllTemplates()
 
+    override fun getAllTemplatesWithTimeBlocks(): Flow<List<TemplateWithTimeBlocks>> = db.templateDao().getAllTemplatesWithTimeBlocks()
+
     override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks> {
         return db.templateDao().getTemplateWithTimeBlocks(id)
     }
