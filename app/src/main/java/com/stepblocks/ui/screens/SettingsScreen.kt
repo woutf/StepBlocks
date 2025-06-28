@@ -1,5 +1,6 @@
 package com.stepblocks.ui.screens
 
+import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,9 +29,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.stepblocks.data.AppDatabase
+import com.stepblocks.data.SettingsRepository
 import com.stepblocks.viewmodel.SettingsUiState
 import com.stepblocks.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +51,7 @@ import com.stepblocks.viewmodel.VibrationPattern
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(LocalContext.current.applicationContext as Application))) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -278,50 +284,21 @@ fun VibrationPatternSelector(
     }
 }
 
-class FakeSettingsViewModel(initialState: SettingsUiState) : SettingsViewModel() {
-    private val _uiState = MutableStateFlow(initialState)
-    override val uiState: StateFlow<SettingsUiState> = _uiState
-
-    override fun onProgressUpdatesToggleChange(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(progressUpdatesEnabled = isEnabled)
-    }
-
-    override fun onBeginBlockUpdatesChange(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(beginBlockUpdates = isEnabled)
-    }
-
-    override fun onMidBlockUpdatesChange(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(midBlockUpdates = isEnabled)
-    }
-
-    override fun onEndBlockUpdatesChange(isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(endBlockUpdates = isEnabled)
-    }
-
-    override fun onBehindTargetPatternChange(pattern: VibrationPattern) {
-        _uiState.value = _uiState.value.copy(behindTargetPattern = pattern)
-    }
-
-    override fun onOnTargetPatternChange(pattern: VibrationPattern) {
-        _uiState.value = _uiState.value.copy(onTargetPattern = pattern)
-    }
-
-    override fun onAheadTargetPatternChange(pattern: VibrationPattern) {
-        _uiState.value = _uiState.value.copy(aheadTargetPattern = pattern)
+class SettingsViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            val database = AppDatabase.getDatabase(application)
+            val repository = SettingsRepository(database.settingsDao())
+            @Suppress("UNCHECKED_CAST")
+            return SettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    val fakeViewModel = FakeSettingsViewModel(initialState = SettingsUiState(
-        progressUpdatesEnabled = true,
-        beginBlockUpdates = true,
-        midBlockUpdates = true,
-        endBlockUpdates = true,
-        behindTargetPattern = VibrationPattern.SHORT_DOUBLE_TAP,
-        onTargetPattern = VibrationPattern.LONG_SINGLE,
-        aheadTargetPattern = VibrationPattern.TRIPLE_TAP
-    ))
-    SettingsScreen(viewModel = fakeViewModel)
+    val fakeApplication = Application() // This won't work correctly in a real preview
+    SettingsScreen(viewModel = SettingsViewModel(SettingsRepository(AppDatabase.getDatabase(fakeApplication).settingsDao())))
 }

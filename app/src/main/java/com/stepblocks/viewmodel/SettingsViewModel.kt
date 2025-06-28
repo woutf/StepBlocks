@@ -1,10 +1,14 @@
 package com.stepblocks.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.stepblocks.data.Settings
+import com.stepblocks.data.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 enum class VibrationPattern {
     NONE,
@@ -23,36 +27,79 @@ data class SettingsUiState(
     val aheadTargetPattern: VibrationPattern = VibrationPattern.TRIPLE_TAP
 )
 
-open class SettingsViewModel : ViewModel() {
+class SettingsViewModel(private val settingsRepository: SettingsRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
-    open val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    open fun onProgressUpdatesToggleChange(isEnabled: Boolean) {
+    init {
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _uiState.value = settings?.let {
+                    SettingsUiState(
+                        progressUpdatesEnabled = it.progressUpdatesEnabled,
+                        beginBlockUpdates = it.beginBlockUpdates,
+                        midBlockUpdates = it.midBlockUpdates,
+                        endBlockUpdates = it.endBlockUpdates,
+                        behindTargetPattern = it.behindTargetPattern,
+                        onTargetPattern = it.onTargetPattern,
+                        aheadTargetPattern = it.aheadTargetPattern
+                    )
+                } ?: SettingsUiState() // Use default if no settings exist
+            }
+        }
+    }
+
+    fun onProgressUpdatesToggleChange(isEnabled: Boolean) {
         _uiState.update { it.copy(progressUpdatesEnabled = isEnabled) }
+        saveSettings()
     }
 
-    open fun onBeginBlockUpdatesChange(isEnabled: Boolean) {
+    fun onBeginBlockUpdatesChange(isEnabled: Boolean) {
         _uiState.update { it.copy(beginBlockUpdates = isEnabled) }
+        saveSettings()
     }
 
-    open fun onMidBlockUpdatesChange(isEnabled: Boolean) {
+    fun onMidBlockUpdatesChange(isEnabled: Boolean) {
         _uiState.update { it.copy(midBlockUpdates = isEnabled) }
+        saveSettings()
     }
 
-    open fun onEndBlockUpdatesChange(isEnabled: Boolean) {
+    fun onEndBlockUpdatesChange(isEnabled: Boolean) {
         _uiState.update { it.copy(endBlockUpdates = isEnabled) }
+        saveSettings()
     }
 
-    open fun onBehindTargetPatternChange(pattern: VibrationPattern) {
+    fun onBehindTargetPatternChange(pattern: VibrationPattern) {
         _uiState.update { it.copy(behindTargetPattern = pattern) }
+        saveSettings()
     }
 
-    open fun onOnTargetPatternChange(pattern: VibrationPattern) {
+    fun onOnTargetPatternChange(pattern: VibrationPattern) {
         _uiState.update { it.copy(onTargetPattern = pattern) }
+        saveSettings()
     }
 
-    open fun onAheadTargetPatternChange(pattern: VibrationPattern) {
+    fun onAheadTargetPatternChange(pattern: VibrationPattern) {
         _uiState.update { it.copy(aheadTargetPattern = pattern) }
+        saveSettings()
+    }
+
+    private fun saveSettings() {
+        viewModelScope.launch {
+            _uiState.value.let { currentState ->
+                settingsRepository.updateSettings(
+                    Settings(
+                        progressUpdatesEnabled = currentState.progressUpdatesEnabled,
+                        beginBlockUpdates = currentState.beginBlockUpdates,
+                        midBlockUpdates = currentState.midBlockUpdates,
+                        endBlockUpdates = currentState.endBlockUpdates,
+                        behindTargetPattern = currentState.behindTargetPattern,
+                        onTargetPattern = currentState.onTargetPattern,
+                        aheadTargetPattern = currentState.aheadTargetPattern
+                    )
+                )
+            }
+        }
     }
 }

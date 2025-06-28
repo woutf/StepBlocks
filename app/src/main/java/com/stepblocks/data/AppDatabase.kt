@@ -7,13 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.stepblocks.data.converters.Converters
 
-@Database(entities = [Template::class, TimeBlock::class, DayAssignment::class, DailyProgress::class, BlockProgress::class], version = 1, exportSchema = false)
+@Database(entities = [Template::class, TimeBlock::class, DayAssignment::class, DailyProgress::class, BlockProgress::class, Settings::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun templateDao(): TemplateDao
     abstract fun dayAssignmentDao(): DayAssignmentDao
     abstract fun dailyProgressDao(): DailyProgressDao
     abstract fun blockProgressDao(): BlockProgressDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         @Volatile
