@@ -39,19 +39,21 @@ import androidx.compose.material3.MaterialTheme // Add this import
 import kotlinx.coroutines.flow.map
 import androidx.compose.material.icons.filled.Settings // Import Settings icon
 import androidx.compose.material3.IconButton // Import IconButton
+import androidx.compose.material3.TextField // Import TextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplatesScreen(
     viewModel: TemplateViewModel,
     onTemplateClick: (Long) -> Unit,
-    onAddTemplate: () -> Unit,
     onEditTemplate: (Long) -> Unit,
     onNavigateToSettings: () -> Unit // New parameter for navigation to settings
 ) {
     val templatesWithTimeBlocks by viewModel.templates.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var templateToDelete by remember { mutableStateOf<Template?>(null) }
+    var showAddTemplateDialog by remember { mutableStateOf(false) } // State for dialog visibility
+    var newTemplateName by remember { mutableStateOf("") } // State for TextField input
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -81,6 +83,42 @@ fun TemplatesScreen(
         )
     }
 
+    if (showAddTemplateDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showAddTemplateDialog = false
+                newTemplateName = ""
+            },
+            title = { Text("Add New Template") },
+            text = {
+                TextField(
+                    value = newTemplateName,
+                    onValueChange = { newTemplateName = it },
+                    label = { Text("Template Name") }
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (newTemplateName.isNotBlank()) {
+                        viewModel.addTemplate(Template(id = 0, name = newTemplateName))
+                        showAddTemplateDialog = false
+                        newTemplateName = ""
+                    }
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    showAddTemplateDialog = false
+                    newTemplateName = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -100,7 +138,7 @@ fun TemplatesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddTemplate) {
+            FloatingActionButton(onClick = { showAddTemplateDialog = true }) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Template")
             }
         }
@@ -139,7 +177,7 @@ private class FakeTemplateRepository : TemplateRepository {
         listOf(
             TimeBlock(1, 1, "Block 1", LocalTime.now(), LocalTime.now(), 100)
         )
-    )
+)
 
     override fun getAllTemplates(): Flow<List<Template>> = fakeTemplates
 
@@ -234,6 +272,6 @@ fun TemplatesScreenPreview() {
     StepBlocksTheme {
         val fakeRepository = FakeTemplateRepository()
         val mockViewModel = TemplateViewModel(fakeRepository)
-        TemplatesScreen(mockViewModel, {}, {}, {}, {}) // Update preview to match new signature
+        TemplatesScreen(mockViewModel, {}, {}, {}) // Removed onAddTemplate from here
     }
 }

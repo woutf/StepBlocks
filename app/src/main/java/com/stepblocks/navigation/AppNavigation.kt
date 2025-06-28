@@ -39,9 +39,6 @@ fun AppNavigation() {
                 onTemplateClick = { templateId ->
                     navController.navigate("time_blocks/$templateId")
                 },
-                onAddTemplate = {
-                    navController.navigate("add_edit_template")
-                },
                 onEditTemplate = { templateId ->
                     navController.navigate("add_edit_template?templateId=$templateId")
                 },
