@@ -100,7 +100,7 @@ fun AddEditTimeBlockScreen(
                 },
                 actions = {
                     // Enable the button only if name is not blank and no validation errors
-                    val isSaveEnabled = uiState.name.isNotBlank() && uiState.targetStepsError == null && uiState.timeRangeError == null
+                    val isSaveEnabled = uiState.name.isNotBlank() && uiState.targetStepsError == null && uiState.timeRangeError == null && uiState.overlapError == null
                     TextButton(onClick = { viewModel.saveTimeBlock() }, enabled = isSaveEnabled) {
                         Text("Done")
                     }
@@ -132,7 +132,7 @@ fun AddEditTimeBlockScreen(
                     label = { Text("Start Time") },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
-                    isError = uiState.timeRangeError != null // Indicate error visually
+                    isError = uiState.timeRangeError != null || uiState.overlapError != null // Indicate error visually
                 )
                 Box(modifier = Modifier
                     .matchParentSize()
@@ -147,7 +147,7 @@ fun AddEditTimeBlockScreen(
                     label = { Text("End Time") },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
-                    isError = uiState.timeRangeError != null // Indicate error visually
+                    isError = uiState.timeRangeError != null || uiState.overlapError != null // Indicate error visually
                 )
                 Box(modifier = Modifier
                     .matchParentSize()
@@ -157,6 +157,15 @@ fun AddEditTimeBlockScreen(
             }
             // Display time range error message if present
             uiState.timeRangeError?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+                )
+            }
+            // Display overlap error message if present
+            uiState.overlapError?.let { error ->
                 Text(
                     text = error,
                     color = MaterialTheme.colorScheme.error,

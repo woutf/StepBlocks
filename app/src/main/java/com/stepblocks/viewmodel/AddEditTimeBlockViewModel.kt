@@ -12,6 +12,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.stateIn // Explicit import for stateIn
 
 data class AddEditTimeBlockUiState(
     val name: String = "",
@@ -24,7 +30,8 @@ data class AddEditTimeBlockUiState(
     val isTimeBlockSaved: Boolean = false,
     val isEditing: Boolean = false,
     val targetStepsError: String? = null,
-    val timeRangeError: String? = null // Add error state for time range
+    val timeRangeError: String? = null,
+    val overlapError: String? = null // Add error state for overlap
 )
 
 class AddEditTimeBlockViewModel(
@@ -37,6 +44,15 @@ class AddEditTimeBlockViewModel(
 
     private val templateId: Long = savedStateHandle.get<Long>("templateId")!!
     private var timeBlockId: Long? = savedStateHandle.get<Long>("timeBlockId")?.takeIf { it != -1L }
+
+    // Collect all existing time blocks for the current template
+    private val existingTimeBlocks: StateFlow<List<TimeBlock>> =
+        repository.getTimeBlocksForTemplate(templateId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     init {
         timeBlockId?.let { id ->
@@ -57,6 +73,24 @@ class AddEditTimeBlockViewModel(
                 }
             }
         }
+
+        // Combine _uiState and existingTimeBlocks to re-validate on any relevant change
+        combine(_uiState, existingTimeBlocks) { currentUiState, blocks ->
+            val timeRangeError = validateTimeRange(currentUiState.startTime, currentUiState.endTime)
+            val overlapError = if (timeRangeError == null) {
+                checkOverlap(currentUiState.startTime, currentUiState.endTime, blocks)
+            } else {
+                null
+            }
+            Pair(timeRangeError, overlapError) // Return a Pair of errors
+        }.onEach { (timeRangeError, overlapError) ->
+            _uiState.update { currentState ->
+                currentState.copy(
+                    timeRangeError = timeRangeError,
+                    overlapError = overlapError
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
     fun onNameChange(name: String) {
@@ -64,19 +98,11 @@ class AddEditTimeBlockViewModel(
     }
 
     fun onStartTimeChange(startTime: String) {
-        _uiState.update { currentState ->
-            val updatedState = currentState.copy(startTime = startTime)
-            val error = validateTimeRange(updatedState.startTime, updatedState.endTime)
-            updatedState.copy(timeRangeError = error)
-        }
+        _uiState.update { it.copy(startTime = startTime) }
     }
 
     fun onEndTimeChange(endTime: String) {
-        _uiState.update { currentState ->
-            val updatedState = currentState.copy(endTime = endTime)
-            val error = validateTimeRange(updatedState.startTime, updatedState.endTime)
-            updatedState.copy(timeRangeError = error)
-        }
+        _uiState.update { it.copy(endTime = endTime) }
     }
 
     private fun validateTimeRange(startTimeStr: String, endTimeStr: String): String? {
@@ -93,6 +119,29 @@ class AddEditTimeBlockViewModel(
             }
         } catch (e: Exception) {
             // Handle parsing errors, though the TimePicker should ideally prevent invalid formats
+            null
+        }
+    }
+
+    private fun checkOverlap(startTimeStr: String, endTimeStr: String, existingBlocks: List<TimeBlock>): String? {
+        if (startTimeStr.isBlank() || endTimeStr.isBlank()) return null
+
+        return try {
+            val newStartTime = LocalTime.parse(startTimeStr)
+            val newEndTime = LocalTime.parse(endTimeStr)
+
+            val filteredBlocks = existingBlocks.filterNot { it.id == timeBlockId } // Exclude current block if editing
+
+            for (block in filteredBlocks) {
+                // Check for overlap:
+                // (StartA < EndB) && (EndA > StartB)
+                // New block starts before existing block ends AND new block ends after existing block starts
+                if (newStartTime.isBefore(block.endTime) && newEndTime.isAfter(block.startTime)) {
+                    return "Overlaps with existing block '${block.name}' (${block.startTime.format(DateTimeFormatter.ofPattern("HH:mm"))} - ${block.endTime.format(DateTimeFormatter.ofPattern("HH:mm"))})"
+                }
+            }
+            null
+        } catch (e: Exception) {
             null
         }
     }
@@ -121,23 +170,27 @@ class AddEditTimeBlockViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            // Validate target steps
+            // Re-validate all fields just before saving to ensure latest state
             val steps = currentState.targetSteps.toIntOrNull()
             if (steps == null || steps <= 0) {
                 _uiState.update { it.copy(targetStepsError = "Steps must be a positive number") }
                 return@launch
-            } else {
-                _uiState.update { it.copy(targetStepsError = null) }
             }
 
-            // Validate time range before saving
             val timeRangeError = validateTimeRange(currentState.startTime, currentState.endTime)
             if (timeRangeError != null) {
                 _uiState.update { it.copy(timeRangeError = timeRangeError) }
                 return@launch
-            } else {
-                _uiState.update { it.copy(timeRangeError = null) }
             }
+
+            val overlapError = checkOverlap(currentState.startTime, currentState.endTime, existingTimeBlocks.value)
+            if (overlapError != null) {
+                _uiState.update { it.copy(overlapError = overlapError) }
+                return@launch
+            }
+
+            // Clear any lingering errors if all validations pass
+            _uiState.update { it.copy(targetStepsError = null, timeRangeError = null, overlapError = null) }
 
             val timeBlock = TimeBlock(
                 id = timeBlockId ?: 0,
