@@ -37,6 +37,8 @@ import java.time.LocalTime
 import androidx.compose.material3.TopAppBarDefaults // Import TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme // Add this import
 import kotlinx.coroutines.flow.map
+import androidx.compose.material.icons.filled.Settings // Import Settings icon
+import androidx.compose.material3.IconButton // Import IconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +46,8 @@ fun TemplatesScreen(
     viewModel: TemplateViewModel,
     onTemplateClick: (Long) -> Unit,
     onAddTemplate: () -> Unit,
-    onEditTemplate: (Long) -> Unit
+    onEditTemplate: (Long) -> Unit,
+    onNavigateToSettings: () -> Unit // New parameter for navigation to settings
 ) {
     val templatesWithTimeBlocks by viewModel.templates.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -82,6 +85,14 @@ fun TemplatesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Templates") },
+                actions = { // Add actions block for settings icon
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -223,6 +234,6 @@ fun TemplatesScreenPreview() {
     StepBlocksTheme {
         val fakeRepository = FakeTemplateRepository()
         val mockViewModel = TemplateViewModel(fakeRepository)
-        TemplatesScreen(mockViewModel, {}, {}, {})
+        TemplatesScreen(mockViewModel, {}, {}, {}, {}) // Update preview to match new signature
     }
 }

@@ -14,6 +14,7 @@ import com.stepblocks.ui.screens.AddEditTemplateScreen
 import com.stepblocks.ui.screens.AddEditTimeBlockScreen
 import com.stepblocks.ui.screens.TemplatesScreen
 import com.stepblocks.ui.screens.TimeBlocksScreen
+import com.stepblocks.ui.screens.SettingsScreen // Import SettingsScreen
 import com.stepblocks.viewmodel.AddEditTemplateViewModel
 import com.stepblocks.viewmodel.AddEditTemplateViewModelFactory
 import com.stepblocks.viewmodel.AddEditTimeBlockViewModel
@@ -43,6 +44,9 @@ fun AppNavigation() {
                 },
                 onEditTemplate = { templateId ->
                     navController.navigate("add_edit_template?templateId=$templateId")
+                },
+                onNavigateToSettings = { // Pass navigation for settings
+                    navController.navigate("settings")
                 }
             )
         }
@@ -103,6 +107,10 @@ fun AppNavigation() {
                 navController = navController,
                 viewModel = viewModel
             )
+        }
+        // New composable for SettingsScreen
+        composable("settings") {
+            SettingsScreen()
         }
     }
 }
