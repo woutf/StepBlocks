@@ -1,24 +1,12 @@
 package com.stepblocks.data
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
-import java.time.LocalDate
+import java.util.Date
 
-@Entity(
-    tableName = "daily_progress",
-    foreignKeys = [
-        ForeignKey(
-            entity = Template::class,
-            parentColumns = ["id"],
-            childColumns = ["templateId"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ],
-    indices = [Index(value = ["templateId"])]
-)
+@Entity(tableName = "daily_progress")
 data class DailyProgress(
-    @PrimaryKey val date: LocalDate,
-    val templateId: Long?
+    @PrimaryKey val date: Date,
+    val templateId: String,
+    val blockProgress: List<BlockProgress>
 )

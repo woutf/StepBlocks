@@ -72,6 +72,12 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
 
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Health Connect
+    implementation("androidx.health.connect:connect-client:1.0.0-alpha11")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

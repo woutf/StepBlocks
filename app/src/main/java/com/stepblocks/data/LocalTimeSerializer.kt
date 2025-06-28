@@ -1,4 +1,3 @@
-
 package com.stepblocks.data
 
 import kotlinx.serialization.KSerializer
@@ -13,8 +12,7 @@ import java.time.format.DateTimeFormatter
 object LocalTimeSerializer : KSerializer<LocalTime> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_TIME
 
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("LocalTime", PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalTime", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: LocalTime) {
         encoder.encodeString(value.format(formatter))
