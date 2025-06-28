@@ -83,10 +83,7 @@ fun TimeBlockCardPreview() {
             name = "Morning Walk",
             startTime = LocalTime.of(8, 0),
             endTime = LocalTime.of(9, 0),
-            targetSteps = 2000,
-            notifyStart = true,
-            notifyMid = true,
-            notifyEnd = false
+            targetSteps = 2000
         ),
         onEdit = {},
         onDelete = {}

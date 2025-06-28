@@ -25,9 +25,6 @@ data class AddEditTimeBlockUiState(
     val startTime: String = "",
     val endTime: String = "",
     val targetSteps: String = "",
-    val notifyStart: Boolean = false,
-    val notifyMid: Boolean = false,
-    val notifyEnd: Boolean = false,
     val isTimeBlockSaved: Boolean = false,
     val isEditing: Boolean = false,
     val targetStepsError: String? = null,
@@ -65,9 +62,6 @@ class AddEditTimeBlockViewModel(
                             startTime = timeBlock.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
                             endTime = timeBlock.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
                             targetSteps = timeBlock.targetSteps.toString(),
-                            notifyStart = timeBlock.notifyStart,
-                            notifyMid = timeBlock.notifyMid,
-                            notifyEnd = timeBlock.notifyEnd,
                             isEditing = true
                         )
                     }
@@ -193,18 +187,6 @@ class AddEditTimeBlockViewModel(
         }
     }
 
-    fun onNotifyStartChange(isEnabled: Boolean) {
-        _uiState.update { it.copy(notifyStart = isEnabled) }
-    }
-
-    fun onNotifyMidChange(isEnabled: Boolean) {
-        _uiState.update { it.copy(notifyMid = isEnabled) }
-    }
-
-    fun onNotifyEndChange(isEnabled: Boolean) {
-        _uiState.update { it.copy(notifyEnd = isEnabled) }
-    }
-
     fun saveTimeBlock() {
         viewModelScope.launch {
             val currentState = _uiState.value
@@ -237,10 +219,7 @@ class AddEditTimeBlockViewModel(
                 name = currentState.name,
                 startTime = LocalTime.parse(currentState.startTime),
                 endTime = LocalTime.parse(currentState.endTime),
-                targetSteps = steps,
-                notifyStart = currentState.notifyStart,
-                notifyMid = currentState.notifyMid,
-                notifyEnd = currentState.notifyEnd
+                targetSteps = steps
             )
 
             if (timeBlockId == null) {

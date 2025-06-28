@@ -184,43 +184,7 @@ fun AddEditTimeBlockScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text("Notifications", style = MaterialTheme.typography.titleMedium)
-
-            NotificationToggle(
-                text = "Start notification",
-                checked = uiState.notifyStart,
-                onCheckedChange = viewModel::onNotifyStartChange
-            )
-            NotificationToggle(
-                text = "Mid-point notification",
-                checked = uiState.notifyMid,
-                onCheckedChange = viewModel::onNotifyMidChange
-            )
-            NotificationToggle(
-                text = "End notification",
-                checked = uiState.notifyEnd,
-                onCheckedChange = viewModel::onNotifyEndChange
-            )
         }
-    }
-}
-
-@Composable
-private fun NotificationToggle(
-    text: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

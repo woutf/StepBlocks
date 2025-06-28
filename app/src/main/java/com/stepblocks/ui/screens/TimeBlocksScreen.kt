@@ -266,8 +266,8 @@ class FakeTimeBlocksViewModel(
         val currentTemplate = _templateWithTimeBlocks.value?.template
         if (currentTemplate != null) {
             _editableTemplateName.value = newName
-            // In a real app, you'd trigger a repository update here.
-            // For preview, we're just updating the local state.
+            // In a real app, you\'d trigger a repository update here.
+            // For preview, we\'re just updating the local state.
         }
     }
 }
@@ -276,9 +276,9 @@ class FakeTimeBlocksViewModel(
 @Composable
 fun TimeBlocksScreenPreview() {
     val dummyTimeBlocks = listOf(
-        TimeBlock(1, 1L, "Morning Stroll", LocalTime.of(8, 0), LocalTime.of(9, 0), 1500, true, true, false),
-        TimeBlock(2, 1L, "Lunch Break Walk", LocalTime.of(12, 30), LocalTime.of(13, 0), 500, false, true, false),
-        TimeBlock(3, 1L, "Evening Power Walk", LocalTime.of(18, 0), LocalTime.of(18, 30), 2000, true, true, true)
+        TimeBlock(1, 1L, "Morning Stroll", LocalTime.of(8, 0), LocalTime.of(9, 0), 1500),
+        TimeBlock(2, 1L, "Lunch Break Walk", LocalTime.of(12, 30), LocalTime.of(13, 0), 500),
+        TimeBlock(3, 1L, "Evening Power Walk", LocalTime.of(18, 0), LocalTime.of(18, 30), 2000)
     )
     val dummyTemplate = Template(1, "Weekday")
     val dummyTemplateWithTimeBlocks = TemplateWithTimeBlocks(dummyTemplate, dummyTimeBlocks)

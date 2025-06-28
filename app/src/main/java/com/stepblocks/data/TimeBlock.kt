@@ -30,8 +30,5 @@ data class TimeBlock(
     val startTime: LocalTime,
     @Serializable(with = LocalTimeSerializer::class)
     val endTime: LocalTime,
-    val targetSteps: Int,
-    val notifyStart: Boolean,
-    val notifyMid: Boolean,
-    val notifyEnd: Boolean
+    val targetSteps: Int
 )

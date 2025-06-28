@@ -137,7 +137,7 @@ private class FakeTemplateRepository : TemplateRepository {
     )
     private val fakeTimeBlocks = MutableStateFlow(
         listOf(
-            TimeBlock(1, 1, "Block 1", LocalTime.now(), LocalTime.now(), 100, false, false, false)
+            TimeBlock(1, 1, "Block 1", LocalTime.now(), LocalTime.now(), 100)
         )
     )
 
