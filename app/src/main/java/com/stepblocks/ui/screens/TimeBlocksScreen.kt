@@ -46,6 +46,7 @@ fun TimeBlocksScreen(
     val timeBlocks by viewModel.timeBlocks.collectAsState()
     val assignedDays by viewModel.assignedDays.collectAsState()
     val editableTemplateName by viewModel.editableTemplateName.collectAsState()
+    val showNoTimeBlocksError by viewModel.showNoTimeBlocksError.collectAsState() // Observe error state
     val focusManager = LocalFocusManager.current
     
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -139,6 +140,17 @@ fun TimeBlocksScreen(
         }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
+            // Display error message if no time blocks
+            if (showNoTimeBlocksError) {
+                item {
+                    Text(
+                        text = "This template must have at least one time block.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
             // REMOVED INLINE TEMPLATE NAME EDITING UI
             items(timeBlocks) { timeBlock ->
                 TimeBlockCard(
@@ -222,6 +234,8 @@ class FakeTimeBlocksViewModel(
     private val _editableTemplateName = MutableStateFlow(fakeTemplateWithTimeBlocks?.template?.name ?: "")
     override val editableTemplateName: StateFlow<String> = _editableTemplateName
 
+    override val showNoTimeBlocksError: StateFlow<Boolean> = MutableStateFlow(false) // Added for preview
+
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         val currentTemplateWithTimeBlocks = _templateWithTimeBlocks.value
         if (currentTemplateWithTimeBlocks != null) {
@@ -245,8 +259,8 @@ class FakeTimeBlocksViewModel(
         val currentTemplate = _templateWithTimeBlocks.value?.template
         if (currentTemplate != null) {
             _editableTemplateName.value = newName
-            // In a real app, you'd trigger a repository update here.
-            // For preview, we're just updating the local state.
+            // In a real app, you\'d trigger a repository update here.
+            // For preview, we\'re just updating the local state.
         }
     }
 }

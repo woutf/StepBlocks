@@ -17,6 +17,7 @@ interface ITimeBlocksViewModel {
     val timeBlocks: StateFlow<List<TimeBlock>>
     val assignedDays: StateFlow<Set<Int>>
     val editableTemplateName: StateFlow<String>
+    val showNoTimeBlocksError: StateFlow<Boolean> // Added for validation
     fun deleteTimeBlock(timeBlock: TimeBlock)
     fun toggleDayAssignment(dayOfWeek: Int)
     fun updateTemplateName(newName: String)
@@ -33,7 +34,8 @@ class TimeBlocksViewModel(
         repository.getTemplateWithTimeBlocks(templateId)
             .distinctUntilChanged()
             .onEach { data ->
-                println("TemplateWithTimeBlocks updated: ${data?.template?.name}, blocks: ${data?.timeBlocks?.size}")
+                // This onEach block is useful for debugging, but not strictly necessary for logic
+                // println("TemplateWithTimeBlocks updated: ${data?.template?.name}, blocks: ${data?.timeBlocks?.size}")
             }
 
     override val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?> =
@@ -73,6 +75,22 @@ class TimeBlocksViewModel(
                 started = SharingStarted.Lazily,
                 initialValue = ""
             )
+
+    private val _showNoTimeBlocksError = MutableStateFlow(false)
+    override val showNoTimeBlocksError: StateFlow<Boolean> = _showNoTimeBlocksError.asStateFlow()
+
+    init {
+        // Observe both templateWithTimeBlocks and timeBlocks to determine error state
+        combine(templateWithTimeBlocks, timeBlocks) { templateData, blocks ->
+            // Show error if template is loaded but has no time blocks
+            templateData != null && blocks.isEmpty()
+        }
+        .distinctUntilChanged() // Only emit when the error state actually changes
+        .onEach { shouldShowError ->
+            _showNoTimeBlocksError.value = shouldShowError
+        }
+        .launchIn(viewModelScope)
+    }
 
     override fun updateTemplateName(newName: String) {
         viewModelScope.launch {
