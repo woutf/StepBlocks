@@ -11,6 +11,9 @@ interface DayAssignmentDao {
     @Query("SELECT * FROM day_assignments WHERE templateId = :templateId")
     fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>>
 
+    @Query("SELECT * FROM day_assignments WHERE dayOfWeek = :dayOfWeek LIMIT 1")
+    suspend fun getDayAssignmentForDay(dayOfWeek: Int): DayAssignment?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDayAssignment(dayAssignment: DayAssignment)
 
