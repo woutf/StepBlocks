@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn // Explicit import for stateIn
+import kotlinx.coroutines.flow.first // Import for .first()
 
 data class AddEditTimeBlockUiState(
     val name: String = "",
@@ -72,7 +73,13 @@ class AddEditTimeBlockViewModel(
                     }
                 }
             }
+        } ?: run { // Only pre-fill if adding a new time block
+            viewModelScope.launch {
+                val blocks = repository.getTimeBlocksForTemplate(templateId).first()
+                calculateAndApplyPrefill(blocks)
+            }
         }
+
 
         // Combine _uiState and existingTimeBlocks to re-validate on any relevant change
         combine(_uiState, existingTimeBlocks) { currentUiState, blocks ->
@@ -146,11 +153,43 @@ class AddEditTimeBlockViewModel(
         }
     }
 
+    private fun calculateAndApplyPrefill(existingBlocks: List<TimeBlock>) {
+        val newStartTime: LocalTime
+        var newEndTime: LocalTime // Changed to var
+        val newTargetSteps: String
+
+        if (existingBlocks.isEmpty()) {
+            newStartTime = LocalTime.of(6, 0)
+            newEndTime = newStartTime.plusHours(3)
+            newTargetSteps = "2000"
+        } else {
+            val lastBlock = existingBlocks.maxByOrNull { it.endTime }
+            newStartTime = lastBlock?.endTime ?: LocalTime.of(6, 0)
+            newEndTime = newStartTime.plusHours(3)
+            // Ensure end time does not exceed 23:59
+            if (newEndTime.isAfter(LocalTime.of(23, 59))) {
+                newEndTime = LocalTime.of(23, 59)
+            }
+            val averageSteps = existingBlocks.map { it.targetSteps }.average().toInt()
+            newTargetSteps = averageSteps.toString()
+        }
+
+        _uiState.update {
+            it.copy(
+                startTime = newStartTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                endTime = newEndTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                targetSteps = newTargetSteps
+            )
+        }
+    }
+
     fun onTargetStepsChange(steps: String) {
         if (steps.all { it.isDigit() }) {
             _uiState.update { it.copy(targetSteps = steps, targetStepsError = null) }
         } else if (steps.isEmpty()) {
             _uiState.update { it.copy(targetSteps = steps, targetStepsError = null) } // Clear error if empty
+        } else {
+            _uiState.update { it.copy(targetSteps = steps, targetStepsError = "Steps must be a number") }
         }
     }
 
