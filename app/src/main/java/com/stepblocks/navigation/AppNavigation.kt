@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.EditCalendar
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +31,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Templates : Screen("templates", "Templates", Icons.Default.List)
     object Schedule : Screen("schedule", "Schedule", Icons.Default.EditCalendar)
     object History : Screen("history", "History", Icons.Default.DateRange)
+    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
 val items = listOf(
@@ -37,6 +39,7 @@ val items = listOf(
     Screen.Templates,
     Screen.Schedule,
     Screen.History,
+    Screen.Settings,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,9 +97,6 @@ fun AppNavigation() {
                     },
                     onEditTemplate = { templateId ->
                         navController.navigate("add_edit_template?templateId=$templateId")
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate("settings")
                     }
                 )
             }

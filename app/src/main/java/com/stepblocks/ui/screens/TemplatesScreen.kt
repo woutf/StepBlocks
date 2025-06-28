@@ -48,7 +48,6 @@ fun TemplatesScreen(
     viewModel: TemplateViewModel,
     onTemplateClick: (Long) -> Unit,
     onEditTemplate: (Long) -> Unit,
-    onNavigateToSettings: () -> Unit // New parameter for navigation to settings
 ) {
     val templatesWithTimeBlocks by viewModel.templates.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -124,14 +123,6 @@ fun TemplatesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Templates") },
-                actions = { // Add actions block for settings icon
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -273,6 +264,6 @@ fun TemplatesScreenPreview() {
     StepBlocksTheme {
         val fakeRepository = FakeTemplateRepository()
         val mockViewModel = TemplateViewModel(fakeRepository)
-        TemplatesScreen(mockViewModel, {}, {}, {}) // Removed onAddTemplate from here
+        TemplatesScreen(mockViewModel, {}, {}) // Removed onAddTemplate from here
     }
 }
