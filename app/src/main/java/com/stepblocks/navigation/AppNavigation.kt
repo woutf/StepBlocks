@@ -1,5 +1,6 @@
 package com.stepblocks.navigation
 
+import android.app.Application // Added import
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -168,15 +169,9 @@ fun AppNavigation() {
         ) {
             composable(Screen.Today.route) {
                 val viewModel: TodayViewModel = viewModel(
-                    factory = TodayViewModel.provideFactory(
-                        application,
-                        database.dayAssignmentDao(),
-                        database.dailyProgressDao(),
-                        database.blockProgressDao(),
-                        application.healthConnectManager
-                    )
+                    factory = TodayViewModelFactory(application.applicationContext as Application) // Corrected factory usage
                 )
-                TodayScreen(viewModel = viewModel)
+                TodayScreen(viewModel = viewModel, contentPadding = innerPadding)
             }
             composable(Screen.Templates.route) {
                 TemplatesScreen(

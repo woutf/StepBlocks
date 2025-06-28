@@ -77,7 +77,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Health Connect
-    implementation("androidx.health.connect:connect-client:1.0.0-alpha11")
+    implementation(libs.androidx.health.connect.client)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
