@@ -99,8 +99,8 @@ fun AddEditTimeBlockScreen(
                     }
                 },
                 actions = {
-                    // Enable the button only if name is not blank and there's no targetStepsError
-                    val isSaveEnabled = uiState.name.isNotBlank() && uiState.targetStepsError == null
+                    // Enable the button only if name is not blank and no validation errors
+                    val isSaveEnabled = uiState.name.isNotBlank() && uiState.targetStepsError == null && uiState.timeRangeError == null
                     TextButton(onClick = { viewModel.saveTimeBlock() }, enabled = isSaveEnabled) {
                         Text("Done")
                     }
@@ -131,7 +131,8 @@ fun AddEditTimeBlockScreen(
                     onValueChange = { /* Read-only */ },
                     label = { Text("Start Time") },
                     modifier = Modifier.fillMaxWidth(),
-                    readOnly = true
+                    readOnly = true,
+                    isError = uiState.timeRangeError != null // Indicate error visually
                 )
                 Box(modifier = Modifier
                     .matchParentSize()
@@ -145,13 +146,23 @@ fun AddEditTimeBlockScreen(
                     onValueChange = { /* Read-only */ },
                     label = { Text("End Time") },
                     modifier = Modifier.fillMaxWidth(),
-                    readOnly = true
+                    readOnly = true,
+                    isError = uiState.timeRangeError != null // Indicate error visually
                 )
                 Box(modifier = Modifier
                     .matchParentSize()
                     .clickable {
                         dialogToShow = PickerDialog.END_TIME
                     })
+            }
+            // Display time range error message if present
+            uiState.timeRangeError?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+                )
             }
             OutlinedTextField(
                 value = uiState.targetSteps,

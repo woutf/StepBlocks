@@ -23,7 +23,8 @@ data class AddEditTimeBlockUiState(
     val notifyEnd: Boolean = false,
     val isTimeBlockSaved: Boolean = false,
     val isEditing: Boolean = false,
-    val targetStepsError: String? = null // Add error state for targetSteps
+    val targetStepsError: String? = null,
+    val timeRangeError: String? = null // Add error state for time range
 )
 
 class AddEditTimeBlockViewModel(
@@ -63,11 +64,37 @@ class AddEditTimeBlockViewModel(
     }
 
     fun onStartTimeChange(startTime: String) {
-        _uiState.update { it.copy(startTime = startTime) }
+        _uiState.update { currentState ->
+            val updatedState = currentState.copy(startTime = startTime)
+            val error = validateTimeRange(updatedState.startTime, updatedState.endTime)
+            updatedState.copy(timeRangeError = error)
+        }
     }
 
     fun onEndTimeChange(endTime: String) {
-        _uiState.update { it.copy(endTime = endTime) }
+        _uiState.update { currentState ->
+            val updatedState = currentState.copy(endTime = endTime)
+            val error = validateTimeRange(updatedState.startTime, updatedState.endTime)
+            updatedState.copy(timeRangeError = error)
+        }
+    }
+
+    private fun validateTimeRange(startTimeStr: String, endTimeStr: String): String? {
+        if (startTimeStr.isBlank() || endTimeStr.isBlank()) return null
+
+        return try {
+            val startTime = LocalTime.parse(startTimeStr)
+            val endTime = LocalTime.parse(endTimeStr)
+
+            if (endTime.isBefore(startTime) || endTime == startTime) {
+                "End time must be after start time"
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            // Handle parsing errors, though the TimePicker should ideally prevent invalid formats
+            null
+        }
     }
 
     fun onTargetStepsChange(steps: String) {
@@ -94,12 +121,22 @@ class AddEditTimeBlockViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value
 
+            // Validate target steps
             val steps = currentState.targetSteps.toIntOrNull()
             if (steps == null || steps <= 0) {
                 _uiState.update { it.copy(targetStepsError = "Steps must be a positive number") }
                 return@launch
             } else {
                 _uiState.update { it.copy(targetStepsError = null) }
+            }
+
+            // Validate time range before saving
+            val timeRangeError = validateTimeRange(currentState.startTime, currentState.endTime)
+            if (timeRangeError != null) {
+                _uiState.update { it.copy(timeRangeError = timeRangeError) }
+                return@launch
+            } else {
+                _uiState.update { it.copy(timeRangeError = null) }
             }
 
             val timeBlock = TimeBlock(
