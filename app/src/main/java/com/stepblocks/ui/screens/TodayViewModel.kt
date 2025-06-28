@@ -4,20 +4,12 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.stepblocks.data.BlockProgress
-import com.stepblocks.data.BlockProgressDao
-import com.stepblocks.data.DailyProgress
-import com.stepblocks.data.DailyProgressDao
-import com.stepblocks.data.DayAssignmentDao
-import com.stepblocks.data.HealthConnectManager
-import com.stepblocks.data.Template
-import com.stepblocks.data.TimeBlock
+import com.stepblocks.data.*
+import com.stepblocks.data.DayOfWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -42,7 +34,7 @@ class TodayViewModel(
 
     private suspend fun loadTodayData() {
         val today = LocalDate.now()
-        val dayOfWeek = today.dayOfWeek.value // 1 = Monday, 7 = Sunday
+        val dayOfWeek = DayOfWeek.values()[today.dayOfWeek.value - 1] // Convert from java.time.DayOfWeek to our custom enum
 
         // 1. Determine the current day's template
         val assignedTemplateId = dayAssignmentDao.getDayAssignmentForDay(dayOfWeek)?.templateId

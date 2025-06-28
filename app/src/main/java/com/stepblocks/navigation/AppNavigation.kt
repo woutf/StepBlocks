@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,12 +28,14 @@ import com.stepblocks.viewmodel.*
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Today : Screen("today", "Today", Icons.Default.Home)
     object Templates : Screen("templates", "Templates", Icons.Default.List)
+    object Schedule : Screen("schedule", "Schedule", Icons.Default.EditCalendar)
     object History : Screen("history", "History", Icons.Default.DateRange)
 }
 
 val items = listOf(
     Screen.Today,
     Screen.Templates,
+    Screen.Schedule,
     Screen.History,
 )
 
@@ -97,7 +100,17 @@ fun AppNavigation() {
                     }
                 )
             }
-             composable("history") {
+
+            composable(Screen.Schedule.route) {
+                val viewModel: ScheduleViewModel = viewModel(
+                    factory = ScheduleViewModelFactory(
+                        database.dayAssignmentDao(),
+                        database.templateDao()
+                    )
+                )
+                ScheduleScreen(viewModel = viewModel)
+            }
+            composable(Screen.History.route) {
                 // History screen composable goes here
             }
             composable(

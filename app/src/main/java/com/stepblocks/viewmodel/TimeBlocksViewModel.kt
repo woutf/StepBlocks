@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stepblocks.data.DayAssignment
+import com.stepblocks.data.DayOfWeek
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -15,11 +16,11 @@ import kotlinx.coroutines.launch
 interface ITimeBlocksViewModel {
     val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?>
     val timeBlocks: StateFlow<List<TimeBlock>>
-    val assignedDays: StateFlow<Set<Int>>
+    val assignedDays: StateFlow<Set<DayOfWeek>>
     val editableTemplateName: StateFlow<String>
     val showNoTimeBlocksError: StateFlow<Boolean> // Added for validation
     fun deleteTimeBlock(timeBlock: TimeBlock)
-    fun toggleDayAssignment(dayOfWeek: Int)
+    fun toggleDayAssignment(dayOfWeek: DayOfWeek)
     fun updateTemplateName(newName: String)
 }
 
@@ -56,7 +57,7 @@ class TimeBlocksViewModel(
                 initialValue = emptyList()
             )
 
-    override val assignedDays: StateFlow<Set<Int>> =
+    override val assignedDays: StateFlow<Set<DayOfWeek>> =
         repository.getDayAssignmentsForTemplate(templateId)
             .map { assignments -> assignments.map { it.dayOfWeek }.toSet() }
             .distinctUntilChanged()
@@ -107,7 +108,7 @@ class TimeBlocksViewModel(
         }
     }
 
-    override fun toggleDayAssignment(dayOfWeek: Int) {
+    override fun toggleDayAssignment(dayOfWeek: DayOfWeek) {
         viewModelScope.launch {
             if (assignedDays.value.contains(dayOfWeek)) {
                 repository.deleteDayAssignment(templateId, dayOfWeek)

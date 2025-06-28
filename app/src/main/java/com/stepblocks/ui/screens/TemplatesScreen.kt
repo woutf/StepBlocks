@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.stepblocks.data.DayAssignment
+import com.stepblocks.data.DayOfWeek
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -261,7 +262,7 @@ private class FakeTemplateRepository : TemplateRepository {
         // Dummy implementation for preview
     }
 
-    override suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: Int) {
+    override suspend fun deleteDayAssignment(templateId: Long, dayOfWeek: DayOfWeek) {
         // Dummy implementation for preview
     }
 }

@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.stepblocks.data.DayOfWeek
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
@@ -196,14 +197,11 @@ fun TimeBlocksScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
-                    val dayMapping = listOf(1, 2, 3, 4, 5, 6, 0) // Mon=1, Tue=2,..., Sun=0
 
-                    for (i in 0..6) {
-                        val dayOfWeekAppIndex = dayMapping[i]
-                        val isAssigned = assignedDays.contains(dayOfWeekAppIndex)
-
+                    DayOfWeek.values().forEachIndexed { index, dayOfWeek ->
+                        val isAssigned = assignedDays.contains(dayOfWeek)
                         OutlinedButton(
-                            onClick = { viewModel.toggleDayAssignment(dayOfWeekAppIndex) },
+                            onClick = { viewModel.toggleDayAssignment(dayOfWeek) },
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f),
@@ -215,7 +213,7 @@ fun TimeBlocksScreen(
                                 contentColor = if (isAssigned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                             )
                         ) {
-                            Text(dayLabels[i])
+                            Text(dayLabels[index])
                         }
                     }
                 }
@@ -235,13 +233,13 @@ class FakeTimeBlocksViewModel(
     private val _timeBlocks = MutableStateFlow(fakeTemplateWithTimeBlocks?.timeBlocks ?: emptyList())
     override val timeBlocks: StateFlow<List<TimeBlock>> = _timeBlocks
 
-    private val _assignedDays = MutableStateFlow(setOf<Int>(0, 1)) // Dummy assigned days: Sunday, Monday
-    override val assignedDays: StateFlow<Set<Int>> = _assignedDays
+    private val _assignedDays = MutableStateFlow(setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY))
+    override val assignedDays: StateFlow<Set<DayOfWeek>> = _assignedDays
 
     private val _editableTemplateName = MutableStateFlow(fakeTemplateWithTimeBlocks?.template?.name ?: "")
     override val editableTemplateName: StateFlow<String> = _editableTemplateName
 
-    override val showNoTimeBlocksError: StateFlow<Boolean> = MutableStateFlow(false) // Added for preview
+    override val showNoTimeBlocksError: StateFlow<Boolean> = MutableStateFlow(false)
 
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         val currentTemplateWithTimeBlocks = _templateWithTimeBlocks.value
@@ -252,7 +250,7 @@ class FakeTimeBlocksViewModel(
         }
     }
 
-    override fun toggleDayAssignment(dayOfWeek: Int) {
+    override fun toggleDayAssignment(dayOfWeek: DayOfWeek) {
         _assignedDays.update { currentDays ->
             if (currentDays.contains(dayOfWeek)) {
                 currentDays - dayOfWeek
@@ -266,8 +264,6 @@ class FakeTimeBlocksViewModel(
         val currentTemplate = _templateWithTimeBlocks.value?.template
         if (currentTemplate != null) {
             _editableTemplateName.value = newName
-            // In a real app, you\'d trigger a repository update here.
-            // For preview, we\'re just updating the local state.
         }
     }
 }
