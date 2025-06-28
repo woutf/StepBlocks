@@ -1,6 +1,7 @@
 package com.stepblocks.ui.screens
 
 import android.app.Application
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,6 +55,21 @@ import com.stepblocks.viewmodel.VibrationPattern
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(LocalContext.current.applicationContext as Application))) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.backupFileUri) {
+        uiState.backupFileUri?.let { uri ->
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "application/json"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            context.startActivity(shareIntent)
+            viewModel.onBackupShareComplete()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -183,12 +200,12 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Button(
-                onClick = { /* TODO: Implement export history */ },
+                onClick = { viewModel.onBackupTemplatesClick() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                Text("Export History")
+                Text("Backup Templates")
             }
             Button(
                 onClick = { /* TODO: Implement clear all data */ },
@@ -288,9 +305,14 @@ class SettingsViewModelFactory(private val application: Application) : ViewModel
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
             val database = AppDatabase.getDatabase(application)
-            val repository = SettingsRepository(database.settingsDao())
+            val settingsRepository = SettingsRepository(database.settingsDao())
             @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(repository) as T
+            return SettingsViewModel(
+                application = application,
+                settingsRepository = settingsRepository,
+                templateDao = database.templateDao(),
+                timeBlockDao = database.timeBlockDao()
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
@@ -300,5 +322,13 @@ class SettingsViewModelFactory(private val application: Application) : ViewModel
 @Composable
 fun SettingsScreenPreview() {
     val fakeApplication = Application() // This won't work correctly in a real preview
-    SettingsScreen(viewModel = SettingsViewModel(SettingsRepository(AppDatabase.getDatabase(fakeApplication).settingsDao())))
+    val db = AppDatabase.getDatabase(fakeApplication)
+    SettingsScreen(
+        viewModel = SettingsViewModel(
+            application = fakeApplication,
+            settingsRepository = SettingsRepository(db.settingsDao()),
+            templateDao = db.templateDao(),
+            timeBlockDao = db.timeBlockDao()
+        )
+    )
 }
