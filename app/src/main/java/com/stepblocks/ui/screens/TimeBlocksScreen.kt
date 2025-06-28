@@ -1,6 +1,7 @@
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +20,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,9 +38,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.clickable // ADD THIS IMPORT
+import androidx.compose.foundation.clickable 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +62,7 @@ fun TimeBlocksScreen(
         timeBlocks.sumOf { it.targetSteps }
     }
 
-    var showEditTitleDialog by remember { mutableStateOf(false) } // ADD THIS
+    var showEditTitleDialog by remember { mutableStateOf(false) } 
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -85,7 +92,6 @@ fun TimeBlocksScreen(
         )
     }
 
-    // ADDED DIALOG FOR TEMPLATE TITLE EDITING
     if (showEditTitleDialog) {
         var dialogTemplateName by remember { mutableStateOf(editableTemplateName) }
         AlertDialog(
@@ -123,7 +129,7 @@ fun TimeBlocksScreen(
                 title = {
                     Text(
                         editableTemplateName,
-                        modifier = Modifier.clickable { showEditTitleDialog = true } // MAKE TITLE TAPPABLE
+                        modifier = Modifier.clickable { showEditTitleDialog = true } 
                     )
                 },
                 actions = {
@@ -218,6 +224,7 @@ fun TimeBlocksScreen(
     }
 }
 
+
 // Preview using a fake ViewModel that implements the interface
 class FakeTimeBlocksViewModel(
     fakeTemplateWithTimeBlocks: TemplateWithTimeBlocks?
@@ -259,8 +266,8 @@ class FakeTimeBlocksViewModel(
         val currentTemplate = _templateWithTimeBlocks.value?.template
         if (currentTemplate != null) {
             _editableTemplateName.value = newName
-            // In a real app, you\'d trigger a repository update here.
-            // For preview, we\'re just updating the local state.
+            // In a real app, you'd trigger a repository update here.
+            // For preview, we're just updating the local state.
         }
     }
 }
