@@ -99,8 +99,10 @@ fun AddEditTimeBlockScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { viewModel.saveTimeBlock() }) { // CHANGE HERE: IconButton to TextButton
-                        Text("Done") // CHANGE HERE: Icon to Text
+                    // Enable the button only if name is not blank and there's no targetStepsError
+                    val isSaveEnabled = uiState.name.isNotBlank() && uiState.targetStepsError == null
+                    TextButton(onClick = { viewModel.saveTimeBlock() }, enabled = isSaveEnabled) {
+                        Text("Done")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -114,7 +116,7 @@ fun AddEditTimeBlockScreen(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 8.dp), // Adjusted padding for consistency
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
@@ -156,6 +158,10 @@ fun AddEditTimeBlockScreen(
                 onValueChange = { viewModel.onTargetStepsChange(it) },
                 label = { Text("Target Steps") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = uiState.targetStepsError != null, // Set isError based on ViewModel state
+                supportingText = { // Display error message
+                    uiState.targetStepsError?.let { Text(it) }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 

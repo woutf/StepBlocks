@@ -18,11 +18,12 @@ data class AddEditTimeBlockUiState(
     val startTime: String = "",
     val endTime: String = "",
     val targetSteps: String = "",
-    val notifyStart: Boolean = false, // Add notifyStart state
-    val notifyMid: Boolean = false,   // Add notifyMid state
-    val notifyEnd: Boolean = false,     // Add notifyEnd state
+    val notifyStart: Boolean = false,
+    val notifyMid: Boolean = false,
+    val notifyEnd: Boolean = false,
     val isTimeBlockSaved: Boolean = false,
-    val isEditing: Boolean = false
+    val isEditing: Boolean = false,
+    val targetStepsError: String? = null // Add error state for targetSteps
 )
 
 class AddEditTimeBlockViewModel(
@@ -46,9 +47,9 @@ class AddEditTimeBlockViewModel(
                             startTime = timeBlock.startTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
                             endTime = timeBlock.endTime.format(DateTimeFormatter.ISO_LOCAL_TIME),
                             targetSteps = timeBlock.targetSteps.toString(),
-                            notifyStart = timeBlock.notifyStart, // Load existing notifyStart
-                            notifyMid = timeBlock.notifyMid,     // Load existing notifyMid
-                            notifyEnd = timeBlock.notifyEnd,       // Load existing notifyEnd
+                            notifyStart = timeBlock.notifyStart,
+                            notifyMid = timeBlock.notifyMid,
+                            notifyEnd = timeBlock.notifyEnd,
                             isEditing = true
                         )
                     }
@@ -71,11 +72,12 @@ class AddEditTimeBlockViewModel(
 
     fun onTargetStepsChange(steps: String) {
         if (steps.all { it.isDigit() }) {
-            _uiState.update { it.copy(targetSteps = steps) }
+            _uiState.update { it.copy(targetSteps = steps, targetStepsError = null) }
+        } else if (steps.isEmpty()) {
+            _uiState.update { it.copy(targetSteps = steps, targetStepsError = null) } // Clear error if empty
         }
     }
 
-    // Functions to handle toggle changes
     fun onNotifyStartChange(isEnabled: Boolean) {
         _uiState.update { it.copy(notifyStart = isEnabled) }
     }
@@ -91,7 +93,14 @@ class AddEditTimeBlockViewModel(
     fun saveTimeBlock() {
         viewModelScope.launch {
             val currentState = _uiState.value
-            val steps = currentState.targetSteps.toIntOrNull() ?: 0
+
+            val steps = currentState.targetSteps.toIntOrNull()
+            if (steps == null || steps <= 0) {
+                _uiState.update { it.copy(targetStepsError = "Steps must be a positive number") }
+                return@launch
+            } else {
+                _uiState.update { it.copy(targetStepsError = null) }
+            }
 
             val timeBlock = TimeBlock(
                 id = timeBlockId ?: 0,
@@ -100,9 +109,9 @@ class AddEditTimeBlockViewModel(
                 startTime = LocalTime.parse(currentState.startTime),
                 endTime = LocalTime.parse(currentState.endTime),
                 targetSteps = steps,
-                notifyStart = currentState.notifyStart, // Save notifyStart state
-                notifyMid = currentState.notifyMid,     // Save notifyMid state
-                notifyEnd = currentState.notifyEnd        // Save notifyEnd state
+                notifyStart = currentState.notifyStart,
+                notifyMid = currentState.notifyMid,
+                notifyEnd = currentState.notifyEnd
             )
 
             if (timeBlockId == null) {
