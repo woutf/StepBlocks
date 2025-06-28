@@ -1,5 +1,11 @@
 package com.stepblocks.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -131,7 +137,35 @@ fun AppNavigation() {
             }
         }
     ) { innerPadding ->
-        NavHost(navController, startDestination = Screen.Today.route, Modifier.padding(innerPadding)) {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Today.route,
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(700)
+                ) + fadeIn(animationSpec = tween(700))
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(700)
+                ) + fadeOut(animationSpec = tween(700))
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(700)
+                ) + fadeIn(animationSpec = tween(700))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(700)
+                ) + fadeOut(animationSpec = tween(700))
+            }
+        ) {
             composable(Screen.Today.route) {
                 val viewModel: TodayViewModel = viewModel(
                     factory = TodayViewModel.provideFactory(

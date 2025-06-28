@@ -89,31 +89,6 @@ fun SettingsScreen(
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState()) // No padding modifier
     ) {
-        // Watch Connection Section
-        Text(
-            text = "Watch Connection",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-        Text(
-            text = "Connection status: Connected", // Placeholder
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        OutlinedButton(
-            onClick = { /* TODO: Implement sync now */ },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Text("Sync Now")
-        }
-        Text(
-            text = "Last sync: 2023-10-27 10:30 AM", // Placeholder
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Divider()
-
         // Notifications Section
         Text(
             text = "Notifications",
