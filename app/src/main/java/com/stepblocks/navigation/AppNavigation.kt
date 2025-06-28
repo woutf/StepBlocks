@@ -2,14 +2,18 @@ package com.stepblocks.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -23,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.stepblocks.StepBlocksApplication
+import com.stepblocks.data.Template
 import com.stepblocks.ui.screens.*
 import com.stepblocks.viewmodel.*
 
@@ -49,6 +54,50 @@ fun AppNavigation() {
     val application = LocalContext.current.applicationContext as StepBlocksApplication
     val database = application.database
 
+    // ViewModel for the Templates screen to handle dialog logic
+    val templateViewModel: TemplateViewModel = viewModel(
+        factory = TemplateViewModelFactory(application.repository)
+    )
+
+    var showAddTemplateDialog by remember { mutableStateOf(false) }
+    var newTemplateName by remember { mutableStateOf("") }
+
+    if (showAddTemplateDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showAddTemplateDialog = false
+                newTemplateName = ""
+            },
+            title = { Text("Add New Template") },
+            text = {
+                TextField(
+                    value = newTemplateName,
+                    onValueChange = { newTemplateName = it },
+                    label = { Text("Template Name") }
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (newTemplateName.isNotBlank()) {
+                        templateViewModel.addTemplate(Template(id = 0, name = newTemplateName))
+                        showAddTemplateDialog = false
+                        newTemplateName = ""
+                    }
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    showAddTemplateDialog = false
+                    newTemplateName = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -71,6 +120,15 @@ fun AppNavigation() {
                     )
                 }
             }
+        },
+        floatingActionButton = {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+            if (currentDestination?.route == Screen.Templates.route) {
+                FloatingActionButton(onClick = { showAddTemplateDialog = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Template")
+                }
+            }
         }
     ) { innerPadding ->
         NavHost(navController, startDestination = Screen.Today.route, Modifier.padding(innerPadding)) {
@@ -87,17 +145,15 @@ fun AppNavigation() {
                 TodayScreen(viewModel = viewModel)
             }
             composable(Screen.Templates.route) {
-                val viewModel: TemplateViewModel = viewModel(
-                    factory = TemplateViewModelFactory(application.repository)
-                )
                 TemplatesScreen(
-                    viewModel = viewModel,
+                    viewModel = templateViewModel, // Re-use the hoisted ViewModel
                     onTemplateClick = { templateId ->
                         navController.navigate("time_blocks/$templateId")
                     },
                     onEditTemplate = { templateId ->
                         navController.navigate("add_edit_template?templateId=$templateId")
-                    }
+                    },
+                    onShowAddTemplateDialog = { showAddTemplateDialog = true }
                 )
             }
 

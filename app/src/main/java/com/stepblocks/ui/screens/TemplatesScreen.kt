@@ -1,26 +1,19 @@
 package com.stepblocks.ui.screens
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.DayOfWeek
@@ -33,14 +26,9 @@ import com.stepblocks.viewmodel.TemplateViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.time.LocalTime
-import androidx.compose.material3.TopAppBarDefaults // Import TopAppBarDefaults
-import androidx.compose.material3.MaterialTheme // Add this import
-import kotlinx.coroutines.flow.map
-import androidx.compose.material.icons.filled.Settings // Import Settings icon
-import androidx.compose.material3.IconButton // Import IconButton
-import androidx.compose.material3.TextField // Import TextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,12 +36,11 @@ fun TemplatesScreen(
     viewModel: TemplateViewModel,
     onTemplateClick: (Long) -> Unit,
     onEditTemplate: (Long) -> Unit,
+    onShowAddTemplateDialog: () -> Unit // Hoisted up
 ) {
     val templatesWithTimeBlocks by viewModel.templates.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var templateToDelete by remember { mutableStateOf<Template?>(null) }
-    var showAddTemplateDialog by remember { mutableStateOf(false) } // State for dialog visibility
-    var newTemplateName by remember { mutableStateOf("") } // State for TextField input
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -83,78 +70,28 @@ fun TemplatesScreen(
         )
     }
 
-    if (showAddTemplateDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                showAddTemplateDialog = false
-                newTemplateName = ""
-            },
-            title = { Text("Add New Template") },
-            text = {
-                TextField(
-                    value = newTemplateName,
-                    onValueChange = { newTemplateName = it },
-                    label = { Text("Template Name") }
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (newTemplateName.isNotBlank()) {
-                        viewModel.addTemplate(Template(id = 0, name = newTemplateName))
-                        showAddTemplateDialog = false
-                        newTemplateName = ""
-                    }
-                }) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                Button(onClick = {
-                    showAddTemplateDialog = false
-                    newTemplateName = ""
-                }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
+    // Add Template Dialog is now hoisted to AppNavigation
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Templates") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
+    LazyColumn { // No padding modifier
+        items(
+            items = templatesWithTimeBlocks,
+            key = { it.template.id }
+        ) { templateWithTimeBlocks ->
+            val totalSteps = templateWithTimeBlocks.timeBlocks.sumOf { it.targetSteps }
+            TemplateCard(
+                template = templateWithTimeBlocks.template,
+                totalSteps = totalSteps,
+                onCardClick = { onTemplateClick(templateWithTimeBlocks.template.id) },
+                onEdit = { onTemplateClick(templateWithTimeBlocks.template.id) },
+                onDelete = {
+                    templateToDelete = templateWithTimeBlocks.template
+                    showDeleteConfirmation = true
+                }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAddTemplateDialog = true }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Template")
-            }
-        }
-    ) { innerPadding ->
-        LazyColumn(modifier = Modifier.padding(innerPadding)) {
-            items(
-                items = templatesWithTimeBlocks,
-                key = { it.template.id }
-            ) { templateWithTimeBlocks ->
-                val totalSteps = templateWithTimeBlocks.timeBlocks.sumOf { it.targetSteps }
-                TemplateCard(
-                    template = templateWithTimeBlocks.template,
-                    totalSteps = totalSteps,
-                    onCardClick = { onTemplateClick(templateWithTimeBlocks.template.id) },
-                    onEdit = { onTemplateClick(templateWithTimeBlocks.template.id) }, // CHANGED THIS
-                    onDelete = {
-                        templateToDelete = templateWithTimeBlocks.template
-                        showDeleteConfirmation = true
-                    }
-                )
-            }
         }
     }
 }
+
 
 // --- Preview ---
 
@@ -264,6 +201,7 @@ fun TemplatesScreenPreview() {
     StepBlocksTheme {
         val fakeRepository = FakeTemplateRepository()
         val mockViewModel = TemplateViewModel(fakeRepository)
-        TemplatesScreen(mockViewModel, {}, {}) // Removed onAddTemplate from here
+        // Preview won't have the padding from the real NavHost, which is fine.
+        TemplatesScreen(mockViewModel, {}, {}, {})
     }
 }
