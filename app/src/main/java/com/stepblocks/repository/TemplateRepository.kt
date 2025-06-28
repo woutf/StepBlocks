@@ -13,9 +13,11 @@ import kotlinx.coroutines.flow.Flow
 interface TemplateRepository {
     fun getAllTemplates(): Flow<List<Template>>
     fun getAllTemplatesWithTimeBlocks(): Flow<List<TemplateWithTimeBlocks>>
-    fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks>
+    fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks?>
+    fun getTemplateFlow(id: Long): Flow<Template?>
     suspend fun getTemplateById(id: Long): Template?
     suspend fun insertTemplate(template: Template)
+    suspend fun updateTemplate(template: Template)
     suspend fun deleteTemplate(template: Template)
     fun getTimeBlocksForTemplate(templateId: Long): Flow<List<TimeBlock>>
     suspend fun getTimeBlockById(id: Long): TimeBlock?

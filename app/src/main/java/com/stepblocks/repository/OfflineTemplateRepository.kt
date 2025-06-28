@@ -1,4 +1,3 @@
-
 package com.stepblocks.repository
 
 import com.stepblocks.data.AppDatabase
@@ -7,6 +6,10 @@ import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The offline implementation of the [TemplateRepository]. This class
@@ -18,9 +21,13 @@ class OfflineTemplateRepository(private val db: AppDatabase) : TemplateRepositor
 
     override fun getAllTemplatesWithTimeBlocks(): Flow<List<TemplateWithTimeBlocks>> = db.templateDao().getAllTemplatesWithTimeBlocks()
 
-    override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks> {
+    override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks?> {
         return db.templateDao().getTemplateWithTimeBlocks(id)
+            .distinctUntilChanged()
+            .conflate()
     }
+
+    override fun getTemplateFlow(id: Long): Flow<Template?> = db.templateDao().getTemplateFlow(id)
 
     override suspend fun getTemplateById(id: Long): Template? = db.templateDao().getTemplateById(id)
 
@@ -28,26 +35,32 @@ class OfflineTemplateRepository(private val db: AppDatabase) : TemplateRepositor
         db.templateDao().insertTemplate(template)
     }
 
+    override suspend fun updateTemplate(template: Template) {
+        db.templateDao().updateTemplate(template)
+    }
+
     override suspend fun deleteTemplate(template: Template) {
         db.templateDao().deleteTemplate(template)
     }
 
     override fun getTimeBlocksForTemplate(templateId: Long): Flow<List<TimeBlock>> {
-        return db.timeBlockDao().getTimeBlocksForTemplate(templateId)
+        return db.templateDao().getTimeBlocksForTemplate(templateId)
+            .distinctUntilChanged()
+            .conflate()
     }
 
-    override suspend fun getTimeBlockById(id: Long): TimeBlock? = db.timeBlockDao().getTimeBlockById(id)
+    override suspend fun getTimeBlockById(id: Long): TimeBlock? = db.templateDao().getTimeBlockById(id)
 
     override suspend fun insertTimeBlock(timeBlock: TimeBlock) {
-        db.timeBlockDao().insertTimeBlock(timeBlock)
+        db.templateDao().insertTimeBlock(timeBlock)
     }
 
     override suspend fun updateTimeBlock(timeBlock: TimeBlock) {
-        db.timeBlockDao().updateTimeBlock(timeBlock)
+        db.templateDao().updateTimeBlock(timeBlock)
     }
 
     override suspend fun deleteTimeBlock(timeBlock: TimeBlock) {
-        db.timeBlockDao().deleteTimeBlock(timeBlock)
+        db.templateDao().deleteTimeBlock(timeBlock)
     }
 
     override fun getDayAssignmentsForTemplate(templateId: Long): Flow<List<DayAssignment>> = db.dayAssignmentDao().getDayAssignmentsForTemplate(templateId)

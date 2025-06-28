@@ -1,29 +1,25 @@
 package com.stepblocks.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import com.stepblocks.StepBlocksApplication
 import com.stepblocks.data.DayAssignment
+import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.repository.TemplateRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+// Interface remains the same for the View
 interface ITimeBlocksViewModel {
     val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?>
     val timeBlocks: StateFlow<List<TimeBlock>>
     val assignedDays: StateFlow<Set<Int>>
+    val editableTemplateName: StateFlow<String>
     fun deleteTimeBlock(timeBlock: TimeBlock)
     fun toggleDayAssignment(dayOfWeek: Int)
+    fun updateTemplateName(newName: String)
 }
 
 class TimeBlocksViewModel(
@@ -33,30 +29,59 @@ class TimeBlocksViewModel(
 
     private val templateId: Long = checkNotNull(savedStateHandle["templateId"])
 
-    override val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?> =
+    private val templateWithTimeBlocksFlow: Flow<TemplateWithTimeBlocks?> =
         repository.getTemplateWithTimeBlocks(templateId)
+            .distinctUntilChanged()
+            .onEach { data ->
+                println("TemplateWithTimeBlocks updated: ${data?.template?.name}, blocks: ${data?.timeBlocks?.size}")
+            }
+
+    override val templateWithTimeBlocks: StateFlow<TemplateWithTimeBlocks?> =
+        templateWithTimeBlocksFlow
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(5000L),
                 initialValue = null
             )
 
     override val timeBlocks: StateFlow<List<TimeBlock>> =
-        templateWithTimeBlocks.map { it?.timeBlocks ?: emptyList() }
+        templateWithTimeBlocks
+            .map { it?.timeBlocks ?: emptyList() }
+            .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(5000L),
                 initialValue = emptyList()
             )
 
-    override val assignedDays: StateFlow<Set<Int>> = 
+    override val assignedDays: StateFlow<Set<Int>> =
         repository.getDayAssignmentsForTemplate(templateId)
             .map { assignments -> assignments.map { it.dayOfWeek }.toSet() }
+            .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.Lazily,
                 initialValue = emptySet()
             )
+
+    override val editableTemplateName: StateFlow<String> =
+        templateWithTimeBlocks
+            .map { it?.template?.name ?: "" }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Lazily,
+                initialValue = ""
+            )
+
+    override fun updateTemplateName(newName: String) {
+        viewModelScope.launch {
+            val currentTemplate = templateWithTimeBlocks.value?.template
+            if (currentTemplate != null && currentTemplate.name != newName) {
+                repository.updateTemplate(currentTemplate.copy(name = newName))
+            }
+        }
+    }
 
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         viewModelScope.launch {
@@ -72,22 +97,5 @@ class TimeBlocksViewModel(
                 repository.insertDayAssignment(DayAssignment(templateId = templateId, dayOfWeek = dayOfWeek))
             }
         }
-    }
-}
-
-class TimeBlocksViewModelFactory(
-    private val templateId: Long
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-        val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as StepBlocksApplication
-        val repository = application.repository
-        val savedStateHandle = extras.createSavedStateHandle()
-        savedStateHandle["templateId"] = templateId
-
-        if (modelClass.isAssignableFrom(TimeBlocksViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return TimeBlocksViewModel(repository, savedStateHandle) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

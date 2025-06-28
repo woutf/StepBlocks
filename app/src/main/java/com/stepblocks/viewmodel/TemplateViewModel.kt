@@ -2,7 +2,6 @@
 package com.stepblocks.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
@@ -31,15 +30,5 @@ class TemplateViewModel(private val repository: TemplateRepository) : ViewModel(
         viewModelScope.launch {
             repository.deleteTemplate(template)
         }
-    }
-}
-
-class TemplateViewModelFactory(private val repository: TemplateRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(TemplateViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return TemplateViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

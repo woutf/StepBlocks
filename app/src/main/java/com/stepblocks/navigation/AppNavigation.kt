@@ -14,9 +14,14 @@ import com.stepblocks.ui.screens.AddEditTemplateScreen
 import com.stepblocks.ui.screens.AddEditTimeBlockScreen
 import com.stepblocks.ui.screens.TemplatesScreen
 import com.stepblocks.ui.screens.TimeBlocksScreen
+import com.stepblocks.viewmodel.AddEditTemplateViewModel
 import com.stepblocks.viewmodel.AddEditTemplateViewModelFactory
+import com.stepblocks.viewmodel.AddEditTimeBlockViewModel
 import com.stepblocks.viewmodel.AddEditTimeBlockViewModelFactory
+import com.stepblocks.viewmodel.TemplateViewModel
 import com.stepblocks.viewmodel.TemplateViewModelFactory
+import com.stepblocks.viewmodel.TimeBlocksViewModel
+import com.stepblocks.viewmodel.TimeBlocksViewModelFactory
 
 @Composable
 fun AppNavigation() {
@@ -25,10 +30,11 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = "templates") {
         composable("templates") {
+            val viewModel: TemplateViewModel = viewModel(
+                factory = TemplateViewModelFactory(application.repository)
+            )
             TemplatesScreen(
-                viewModel = viewModel(
-                    factory = TemplateViewModelFactory(application.repository)
-                ),
+                viewModel = viewModel,
                 onTemplateClick = { templateId ->
                     navController.navigate("time_blocks/$templateId")
                 },
@@ -47,27 +53,32 @@ fun AppNavigation() {
                 defaultValue = -1L
             })
         ) { backStackEntry ->
+            val viewModel: AddEditTemplateViewModel = viewModel(
+                factory = AddEditTemplateViewModelFactory(
+                    application.repository,
+                    backStackEntry.savedStateHandle
+                )
+            )
             AddEditTemplateScreen(
                 navController = navController,
-                viewModel = viewModel(
-                    factory = AddEditTemplateViewModelFactory(
-                        application.repository,
-                        backStackEntry.savedStateHandle
-                    )
-                )
+                viewModel = viewModel
             )
         }
         composable(
             route = "time_blocks/{templateId}",
             arguments = listOf(navArgument("templateId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val templateId = backStackEntry.arguments?.getLong("templateId") ?: -1L
+            val viewModel: TimeBlocksViewModel = viewModel(
+                factory = TimeBlocksViewModelFactory(application.repository)
+            )
             TimeBlocksScreen(
-                templateId = templateId,
+                viewModel = viewModel,
                 onNavigateToAdd = {
+                    val templateId = backStackEntry.arguments?.getLong("templateId") ?: -1L
                     navController.navigate("add_edit_time_block/$templateId")
                 },
                 onNavigateToEdit = { timeBlockId ->
+                    val templateId = backStackEntry.arguments?.getLong("templateId") ?: -1L
                     navController.navigate("add_edit_time_block/$templateId?timeBlockId=$timeBlockId")
                 }
             )
@@ -82,14 +93,15 @@ fun AppNavigation() {
                 }
             )
         ) { backStackEntry ->
+            val viewModel: AddEditTimeBlockViewModel = viewModel(
+                factory = AddEditTimeBlockViewModelFactory(
+                    application.repository,
+                    backStackEntry.savedStateHandle
+                )
+            )
             AddEditTimeBlockScreen(
                 navController = navController,
-                viewModel = viewModel(
-                    factory = AddEditTimeBlockViewModelFactory(
-                        repository = application.repository,
-                        savedStateHandle = backStackEntry.savedStateHandle
-                    )
-                )
+                viewModel = viewModel
             )
         }
     }

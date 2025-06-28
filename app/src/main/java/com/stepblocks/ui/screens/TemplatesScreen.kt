@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.update
 import java.time.LocalTime
 import androidx.compose.material3.TopAppBarDefaults // Import TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme // Add this import
+import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +104,7 @@ fun TemplatesScreen(
                     template = templateWithTimeBlocks.template,
                     totalSteps = totalSteps,
                     onCardClick = { onTemplateClick(templateWithTimeBlocks.template.id) },
-                    onEdit = { onEditTemplate(templateWithTimeBlocks.template.id) },
+                    onEdit = { onTemplateClick(templateWithTimeBlocks.template.id) }, // CHANGED THIS
                     onDelete = {
                         templateToDelete = templateWithTimeBlocks.template
                         showDeleteConfirmation = true
@@ -142,10 +143,14 @@ private class FakeTemplateRepository : TemplateRepository {
         )
     }
 
+    override fun getTemplateFlow(id: Long): Flow<Template?> {
+        return fakeTemplates.map { templates -> templates.find { it.id == id } }
+    }
+
     override suspend fun getTemplateById(id: Long): Template? =
         fakeTemplates.value.find { it.id == id }
 
-    override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks> {
+    override fun getTemplateWithTimeBlocks(id: Long): Flow<TemplateWithTimeBlocks?> {
         val template = fakeTemplates.value.find { it.id == id }
         val timeBlocks = fakeTimeBlocks.value.filter { it.templateId == id }
         return flowOf(TemplateWithTimeBlocks(template!!, timeBlocks))
@@ -159,6 +164,12 @@ private class FakeTemplateRepository : TemplateRepository {
             } else {
                 it + template.copy(id = (it.maxOfOrNull { t -> t.id } ?: 0) + 1)
             }
+        }
+    }
+
+    override suspend fun updateTemplate(template: Template) {
+        fakeTemplates.update { templates ->
+            templates.map { if (it.id == template.id) template else it }
         }
     }
 

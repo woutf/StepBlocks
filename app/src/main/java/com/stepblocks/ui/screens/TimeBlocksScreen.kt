@@ -1,4 +1,3 @@
-
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.BorderStroke
@@ -29,29 +28,33 @@ import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.viewmodel.ITimeBlocksViewModel
 import com.stepblocks.viewmodel.TimeBlocksViewModel
-import com.stepblocks.viewmodel.TimeBlocksViewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.time.LocalTime
 import java.util.Calendar
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.clickable // ADD THIS IMPORT
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeBlocksScreen(
-    templateId: Long,
-    viewModel: ITimeBlocksViewModel = viewModel<TimeBlocksViewModel>(factory = TimeBlocksViewModelFactory(templateId)),
+    viewModel: ITimeBlocksViewModel,
     onNavigateToAdd: () -> Unit,
     onNavigateToEdit: (Long) -> Unit
 ) {
-    val templateWithTimeBlocks by viewModel.templateWithTimeBlocks.collectAsState()
     val timeBlocks by viewModel.timeBlocks.collectAsState()
     val assignedDays by viewModel.assignedDays.collectAsState()
+    val editableTemplateName by viewModel.editableTemplateName.collectAsState()
+    val focusManager = LocalFocusManager.current
+    
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var timeBlockToDelete by remember { mutableStateOf<TimeBlock?>(null) }
     val totalSteps = remember(timeBlocks) {
         timeBlocks.sumOf { it.targetSteps }
     }
+
+    var showEditTitleDialog by remember { mutableStateOf(false) } // ADD THIS
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -81,10 +84,47 @@ fun TimeBlocksScreen(
         )
     }
 
+    // ADDED DIALOG FOR TEMPLATE TITLE EDITING
+    if (showEditTitleDialog) {
+        var dialogTemplateName by remember { mutableStateOf(editableTemplateName) }
+        AlertDialog(
+            onDismissRequest = { showEditTitleDialog = false },
+            title = { Text("Edit Template Name") },
+            text = {
+                OutlinedTextField(
+                    value = dialogTemplateName,
+                    onValueChange = { dialogTemplateName = it },
+                    label = { Text("Template Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateTemplateName(dialogTemplateName)
+                    showEditTitleDialog = false
+                    focusManager.clearFocus()
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditTitleDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(templateWithTimeBlocks?.template?.name ?: "Time Blocks") },
+                title = {
+                    Text(
+                        editableTemplateName,
+                        modifier = Modifier.clickable { showEditTitleDialog = true } // MAKE TITLE TAPPABLE
+                    )
+                },
                 actions = {
                     Text(text = "Total: $totalSteps steps")
                 },
@@ -95,12 +135,11 @@ fun TimeBlocksScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToAdd) {
-                Icon(Icons.Default.Add, contentDescription = "Add Time Block")
-            }
+            // FAB removed as per user request
         }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
+            // REMOVED INLINE TEMPLATE NAME EDITING UI
             items(timeBlocks) { timeBlock ->
                 TimeBlockCard(
                     timeBlock = timeBlock,
@@ -110,6 +149,19 @@ fun TimeBlocksScreen(
                         showDeleteConfirmation = true
                     }
                 )
+            }
+            item { // ADD TIME BLOCK BUTTON REMAINS HERE
+                Button(
+                    onClick = onNavigateToAdd,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Time Block")
+                        Text("Add Time Block")
+                    }
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -167,6 +219,9 @@ class FakeTimeBlocksViewModel(
     private val _assignedDays = MutableStateFlow(setOf<Int>(0, 1)) // Dummy assigned days: Sunday, Monday
     override val assignedDays: StateFlow<Set<Int>> = _assignedDays
 
+    private val _editableTemplateName = MutableStateFlow(fakeTemplateWithTimeBlocks?.template?.name ?: "")
+    override val editableTemplateName: StateFlow<String> = _editableTemplateName
+
     override fun deleteTimeBlock(timeBlock: TimeBlock) {
         val currentTemplateWithTimeBlocks = _templateWithTimeBlocks.value
         if (currentTemplateWithTimeBlocks != null) {
@@ -185,6 +240,15 @@ class FakeTimeBlocksViewModel(
             }
         }
     }
+
+    override fun updateTemplateName(newName: String) {
+        val currentTemplate = _templateWithTimeBlocks.value?.template
+        if (currentTemplate != null) {
+            _editableTemplateName.value = newName
+            // In a real app, you'd trigger a repository update here.
+            // For preview, we're just updating the local state.
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -199,7 +263,6 @@ fun TimeBlocksScreenPreview() {
     val dummyTemplateWithTimeBlocks = TemplateWithTimeBlocks(dummyTemplate, dummyTimeBlocks)
     val fakeViewModel = FakeTimeBlocksViewModel(dummyTemplateWithTimeBlocks)
     TimeBlocksScreen(
-        templateId = 1L,
         viewModel = fakeViewModel,
         onNavigateToAdd = {},
         onNavigateToEdit = {}
