@@ -2,6 +2,8 @@ package com.stepblocks.ui.screens
 
 import android.app.Application
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +47,8 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +60,14 @@ import com.stepblocks.viewmodel.VibrationPattern
 fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(LocalContext.current.applicationContext as Application))) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let { viewModel.onImportTemplatesClick(it) }
+        }
+    )
 
     LaunchedEffect(uiState.backupFileUri) {
         uiState.backupFileUri?.let { uri ->
@@ -71,6 +83,13 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
         }
     }
 
+    LaunchedEffect(uiState.importResultMessage) {
+        uiState.importResultMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onImportMessageShown()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -80,7 +99,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
                     titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -206,6 +226,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 Text("Backup Templates")
+            }
+            Button(
+                onClick = { importLauncher.launch("application/json") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
+                Text("Import Templates")
             }
             Button(
                 onClick = { /* TODO: Implement clear all data */ },
