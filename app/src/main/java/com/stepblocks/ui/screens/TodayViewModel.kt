@@ -61,7 +61,7 @@ class TodayViewModel(
     }
 
     suspend fun loadData() {
-        _uiState.value = _uiState.value.copy(isLoading = true)
+
         val hasPermissions = healthConnectManager.hasAllPermissions()
         _uiState.value = _uiState.value.copy(
             permissionsGranted = hasPermissions,
@@ -100,7 +100,7 @@ class TodayViewModel(
     }
 
     private suspend fun refreshData() {
-        _uiState.value = _uiState.value.copy(isLoading = true)
+
 
         val today = LocalDate.now()
         val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant()

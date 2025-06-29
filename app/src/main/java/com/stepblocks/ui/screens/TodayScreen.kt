@@ -75,16 +75,10 @@ fun TodayScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top // Changed to Top for better layout control
     ) {
-        AnimatedVisibility(
-            visible = uiState.isLoading,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(48.dp))
-        }
+
 
         AnimatedVisibility(
-            visible = !uiState.isLoading && !uiState.permissionsGranted && uiState.showPermissionRationale,
+            visible = !uiState.permissionsGranted && uiState.showPermissionRationale,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -110,7 +104,7 @@ fun TodayScreen(
         }
 
         AnimatedVisibility(
-            visible = !uiState.isLoading && uiState.permissionsGranted && uiState.showNoTemplateMessage,
+            visible = uiState.permissionsGranted && uiState.showNoTemplateMessage,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -127,7 +121,7 @@ fun TodayScreen(
         }
 
         AnimatedVisibility(
-            visible = !uiState.isLoading && uiState.permissionsGranted && !uiState.showNoTemplateMessage,
+            visible = uiState.permissionsGranted && !uiState.showNoTemplateMessage,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
