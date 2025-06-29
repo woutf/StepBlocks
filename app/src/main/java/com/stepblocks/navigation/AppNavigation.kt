@@ -69,6 +69,11 @@ fun AppNavigation() {
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
 
+    val currentScreen = screens.find { screen ->
+        val route = currentDestination?.route ?: ""
+        route.startsWith(screen.route)
+    } ?: Screen.Today
+
     // ViewModel instances for top-level screens or those that need their state lifted
     val addEditTemplateViewModel: AddEditTemplateViewModel = viewModel(
         factory = AddEditTemplateViewModelFactory(application.repository, navBackStackEntry?.savedStateHandle ?: SavedStateHandle())
@@ -135,7 +140,7 @@ fun AppNavigation() {
             TopAppBar(
                 title = { Text(topAppBarTitle) },
                 navigationIcon = {
-                    if (navController.previousBackStackEntry != null) {
+                    if (navController.previousBackStackEntry != null && !currentScreen.isTopLevel) {
                         IconButton(onClick = { navController.navigateUp() }) {
                             Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                         }
@@ -146,12 +151,12 @@ fun AppNavigation() {
         },
         bottomBar = {
             // Hide bottom navigation on child screens
-            val currentScreen = screens.find { screen ->
+            val bottomNavCurrentScreen = screens.find { screen ->
                 val route = currentDestination?.route ?: ""
                 route.startsWith(screen.route)
             } ?: Screen.Today
 
-            if (currentScreen.isTopLevel) {
+            if (bottomNavCurrentScreen.isTopLevel) {
                 NavigationBar {
                     topLevelScreens.forEach { screen ->
                         NavigationBarItem(
