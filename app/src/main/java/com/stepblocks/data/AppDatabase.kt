@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Template::class, TimeBlock::class, DayAssignment::class, DailyProgress::class, BlockProgress::class, Settings::class], version = 7, exportSchema = false)
+@Database(entities = [Template::class, TimeBlock::class, DayAssignment::class, DailyProgress::class, BlockProgress::class, Settings::class], version = 8, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun templateDao(): TemplateDao

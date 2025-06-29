@@ -24,7 +24,7 @@ class ScheduleViewModel(
 
     fun onAssignmentChange(day: DayOfWeek, templateId: Long) {
         viewModelScope.launch {
-            dayAssignmentDao.upsert(DayAssignment(templateId, day))
+            dayAssignmentDao.upsert(DayAssignment(day, templateId)) // Changed order of arguments
         }
     }
 }

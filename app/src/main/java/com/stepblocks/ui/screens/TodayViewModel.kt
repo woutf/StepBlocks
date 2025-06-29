@@ -5,17 +5,23 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.stepblocks.data.HealthConnectManager
 import com.stepblocks.data.AppDatabase
+import com.stepblocks.data.DayAssignment
+import com.stepblocks.data.DayAssignmentDao
+import com.stepblocks.data.HealthConnectManager
 import com.stepblocks.data.Template
+import com.stepblocks.data.TemplateDao
 import com.stepblocks.data.TimeBlock
+import com.stepblocks.data.toDayOfWeek
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -31,33 +37,40 @@ data class TodayScreenUiState(
     val isLoading: Boolean = true,
     val currentTemplate: Template? = null,
     val activeTimeBlock: TimeBlock? = null,
-    val showPermissionRationale: Boolean = false
+    val showPermissionRationale: Boolean = false,
+    val showNoTemplateMessage: Boolean = false,
 )
 
 class TodayViewModel(
     application: Application,
     val healthConnectManager: HealthConnectManager,
-    // Placeholder for DAOs, will be properly injected later
-    // private val dayAssignmentDao: DayAssignmentDao,
-    // private val templateDao: TemplateDao,
-    // private val val dailyProgressDao: DailyProgressDao
+    private val dayAssignmentDao: DayAssignmentDao,
+    private val templateDao: TemplateDao,
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(TodayScreenUiState())
     val uiState: StateFlow<TodayScreenUiState> = _uiState.asStateFlow()
 
+    val templates = templateDao.getAllTemplates()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true) // Set loading true at the start
-            val hasPermissions = healthConnectManager.hasAllPermissions() // Check permissions first
-            _uiState.value = _uiState.value.copy(
-                permissionsGranted = hasPermissions,
-                showPermissionRationale = !hasPermissions,
-                isLoading = false // Set loading false after initial check
-            )
-            if (hasPermissions) {
-                fetchHealthConnectData() // Only fetch data if permissions are granted
-            }
+            loadData()
+        }
+    }
+
+    suspend fun loadData() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        val hasPermissions = healthConnectManager.hasAllPermissions()
+        _uiState.value = _uiState.value.copy(
+            permissionsGranted = hasPermissions,
+            showPermissionRationale = !hasPermissions,
+        )
+        if (hasPermissions) {
+            refreshData()
+        } else {
+            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 
@@ -67,7 +80,9 @@ class TodayViewModel(
             showPermissionRationale = false
         )
         if (uiState.value.permissionsGranted) {
-            fetchHealthConnectData()
+            viewModelScope.launch { // Launch a coroutine for suspend call
+                refreshData()
+            }
         }
     }
 
@@ -75,35 +90,54 @@ class TodayViewModel(
         _uiState.value = _uiState.value.copy(showPermissionRationale = false)
     }
 
-    private fun fetchHealthConnectData() = viewModelScope.launch {
+    fun assignTemplateToToday(templateId: Long) {
+        viewModelScope.launch {
+            val today = LocalDate.now().dayOfWeek.toDayOfWeek()
+            dayAssignmentDao.upsert(DayAssignment(today, templateId)) // Changed order of arguments
+            _uiState.value = _uiState.value.copy(showNoTemplateMessage = false)
+            refreshData()
+        }
+    }
+
+    private suspend fun refreshData() {
         _uiState.value = _uiState.value.copy(isLoading = true)
 
         val today = LocalDate.now()
         val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
         val now = ZonedDateTime.now(ZoneId.systemDefault()).toInstant()
+        val dayOfWeek = today.dayOfWeek.toDayOfWeek()
 
-        // Mock template and time blocks for now, using correct constructors
-        val mockTemplateId = 1L // Assuming a template ID for these blocks
-        val mockTimeBlocks = listOf(
-            TimeBlock(id = 1, templateId = mockTemplateId, name = "Morning", startTime = LocalTime.of(6, 0), endTime = LocalTime.of(9, 0), targetSteps = 2000, notifyStart = false, notifyMid = false, notifyEnd = false),
-            TimeBlock(id = 2, templateId = mockTemplateId, name = "Work AM", startTime = LocalTime.of(9, 0), endTime = LocalTime.of(12, 0), targetSteps = 3000, notifyStart = false, notifyMid = false, notifyEnd = false),
-            TimeBlock(id = 3, templateId = mockTemplateId, name = "Lunch", startTime = LocalTime.of(12, 0), endTime = LocalTime.of(13, 0), targetSteps = 1000, notifyStart = false, notifyMid = false, notifyEnd = false),
-            TimeBlock(id = 4, templateId = mockTemplateId, name = "Work PM", startTime = LocalTime.of(13, 0), endTime = LocalTime.of(17, 0), targetSteps = 4000, notifyStart = false, notifyMid = false, notifyEnd = false),
-            TimeBlock(id = 5, templateId = mockTemplateId, name = "Evening", startTime = LocalTime.of(17, 0), endTime = LocalTime.of(23, 59), targetSteps = 2000, notifyStart = false, notifyMid = false, notifyEnd = false)
-        )
-        val mockTemplate = Template(id = mockTemplateId, name = "Mock Daily Template")
+        val dayAssignment = dayAssignmentDao.getDayAssignmentForDay(dayOfWeek)
+
+        if (dayAssignment == null) {
+            _uiState.value = _uiState.value.copy(
+                showNoTemplateMessage = true,
+                isLoading = false
+            )
+            return
+        }
+
+        val templateWithTimeBlocks = templateDao.getTemplateWithTimeBlocks(dayAssignment.templateId).firstOrNull()
+
+        if (templateWithTimeBlocks == null) {
+            _uiState.value = _uiState.value.copy(
+                showNoTemplateMessage = true,
+                isLoading = false
+            )
+            return
+        }
+
+        val template = templateWithTimeBlocks.template
+        val timeBlocks = templateWithTimeBlocks.timeBlocks
 
         _uiState.value = _uiState.value.copy(
-            currentTemplate = mockTemplate,
-            dailyTarget = mockTimeBlocks.sumOf { it.targetSteps } // Sum from mockTimeBlocks
+            currentTemplate = template,
+            dailyTarget = timeBlocks.sumOf { it.targetSteps }
         )
 
-        val totalDailySteps = healthConnectManager.readSteps(
-            startOfDay,
-            now
-        )
+        val totalDailySteps = healthConnectManager.readSteps(startOfDay, now)
 
-        val activeBlock = mockTimeBlocks.find { block -> // Use mockTimeBlocks here
+        val activeBlock = timeBlocks.find { block ->
             val blockStartInstant = ZonedDateTime.of(today, block.startTime, ZoneId.systemDefault()).toInstant()
             val blockEndInstant = ZonedDateTime.of(today, block.endTime, ZoneId.systemDefault()).toInstant()
             now.isAfter(blockStartInstant) && now.isBefore(blockEndInstant)
@@ -111,10 +145,7 @@ class TodayViewModel(
 
         val currentBlockSteps = if (activeBlock != null) {
             val blockStartInstant = ZonedDateTime.of(today, activeBlock.startTime, ZoneId.systemDefault()).toInstant()
-            healthConnectManager.readSteps(
-                blockStartInstant,
-                now
-            )
+            healthConnectManager.readSteps(blockStartInstant, now)
         } else null
 
         val timeRemaining = if (activeBlock != null) {
@@ -143,10 +174,13 @@ class TodayViewModelFactory(private val application: Application) : ViewModelPro
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TodayViewModel::class.java)) {
             val healthConnectManager = HealthConnectManager(application.applicationContext)
+            val db = AppDatabase.getDatabase(application)
             @Suppress("UNCHECKED_CAST")
             return TodayViewModel(
                 application = application,
-                healthConnectManager = healthConnectManager
+                healthConnectManager = healthConnectManager,
+                dayAssignmentDao = db.dayAssignmentDao(),
+                templateDao = db.templateDao()
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
