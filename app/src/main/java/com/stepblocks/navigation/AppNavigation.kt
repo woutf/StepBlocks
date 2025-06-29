@@ -141,31 +141,7 @@ fun AppNavigation() {
         NavHost(
             navController = navController,
             startDestination = Screen.Today.route,
-            modifier = Modifier.padding(innerPadding),
-            enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(700)
-                ) + fadeIn(animationSpec = tween(700))
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(700)
-                ) + fadeOut(animationSpec = tween(700))
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(700)
-                ) + fadeIn(animationSpec = tween(700))
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(700)
-                ) + fadeOut(animationSpec = tween(700))
-            }
+            modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Today.route) {
                 val viewModel: TodayViewModel = viewModel(
@@ -196,7 +172,7 @@ fun AppNavigation() {
                 ScheduleScreen(viewModel = viewModel)
             }
             composable(Screen.History.route) {
-                // History screen composable goes here
+                HistoryScreen()
             }
             composable(
                 route = "add_edit_template?templateId={templateId}",
