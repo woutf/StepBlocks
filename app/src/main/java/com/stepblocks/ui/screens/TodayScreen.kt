@@ -73,7 +73,7 @@ fun TodayScreen(
             .padding(contentPadding)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top // Changed to Top for better layout control
     ) {
         AnimatedVisibility(
             visible = uiState.isLoading,
@@ -131,28 +131,84 @@ fun TodayScreen(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Template for today
                 Text(
-                    text = "Today\'s Progress",
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = "Template for today: ${uiState.currentTemplate?.name ?: "-"}",
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+                // Daily Progress Indicator
+                val dailyProgress = if (uiState.dailyTarget > 0) uiState.totalDailySteps.toFloat() / uiState.dailyTarget else 0f
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(200.dp)
+                ) {
+                    CircularProgressIndicator(
+                        progress = dailyProgress,
+                        modifier = Modifier.fillMaxSize(),
+                        strokeWidth = 12.dp,
+                        color = MaterialTheme.colorScheme.primary, // Current color for progress
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant // Muted base color
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${uiState.totalDailySteps}",
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                        Text(
+                            text = "/ ${uiState.dailyTarget} steps",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Current Block: Name
                 Text(
-                    text = "Total Daily Steps: ${uiState.totalDailySteps} / ${uiState.dailyTarget}",
+                    text = "Current block: ${uiState.currentBlockName}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Current Block Progress Indicator
+                val blockProgress = if (uiState.currentBlockTarget > 0) uiState.currentBlockSteps.toFloat() / uiState.currentBlockTarget else 0f
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(150.dp)
+                ) {
+                    CircularProgressIndicator(
+                        progress = blockProgress,
+                        modifier = Modifier.fillMaxSize(),
+                        strokeWidth = 10.dp,
+                        color = MaterialTheme.colorScheme.secondary, // Current color for progress
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant // Muted base color
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${uiState.currentBlockSteps}",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Text(
+                            text = "/ ${uiState.currentBlockTarget} steps",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Time remaining in block
+                Text(
+                    text = "${uiState.timeRemainingInBlock} in current block",
                     style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Current Block: ${uiState.currentBlockName}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Block Steps: ${uiState.currentBlockSteps} / ${uiState.currentBlockTarget}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Time Remaining: ${uiState.timeRemainingInBlock}",
-                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
