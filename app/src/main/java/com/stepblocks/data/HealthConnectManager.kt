@@ -7,6 +7,7 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
+import java.io.IOException
 import java.time.Instant
 
 class HealthConnectManager(private val context: Context) {
@@ -29,43 +30,26 @@ class HealthConnectManager(private val context: Context) {
     }
 
     suspend fun readSteps(startTime: Instant, endTime: Instant): Long? {
-        // TODO: Implement actual Health Connect API call to read steps
-        // This will require handling permissions and potential errors.
-        // For now, return a mock value or null.
-        return null
-    }
-
-    suspend fun checkPermissionsAndReadSteps(
-        startTime: Instant,
-        endTime: Instant,
-        permissionsGranted: (Boolean) -> Unit
-    ): Long? {
         try {
-            val granted = healthConnectClient.permissionController.getGrantedPermissions()
-            if (granted.containsAll(permissions)) {
-                permissionsGranted(true)
-                // Read steps if permissions are granted
-                val response = healthConnectClient.readRecords(
-                    ReadRecordsRequest(
-                        StepsRecord::class,
-                        timeRangeFilter = androidx.health.connect.client.time.TimeRangeFilter.between(
-                            startTime,
-                            endTime
-                        )
+            val response = healthConnectClient.readRecords(
+                ReadRecordsRequest(
+                    StepsRecord::class,
+                    timeRangeFilter = androidx.health.connect.client.time.TimeRangeFilter.between(
+                        startTime,
+                        endTime
                     )
                 )
-                var totalSteps = 0L
-                for (stepRecord in response.records) {
-                    totalSteps += stepRecord.count
-                }
-                return totalSteps
-            } else {
-                permissionsGranted(false)
-                return null
+            )
+            var totalSteps = 0L
+            for (stepRecord in response.records) {
+                totalSteps += stepRecord.count
             }
+            return totalSteps
         } catch (e: Exception) {
             // Handle exceptions like permission not granted, API not available, etc.
-            permissionsGranted(false)
+            if (e is IOException) {
+                // Handle IO exceptions (e.g., Health Connect app not installed or unavailable)
+            }
             e.printStackTrace()
             return null
         }

@@ -85,11 +85,11 @@ class TodayViewModel(
         // Mock template and time blocks for now, using correct constructors
         val mockTemplateId = 1L // Assuming a template ID for these blocks
         val mockTimeBlocks = listOf(
-            TimeBlock(id = 1, templateId = mockTemplateId, name = "Morning", startTime = LocalTime.of(6, 0), endTime = LocalTime.of(9, 0), targetSteps = 2000),
-            TimeBlock(id = 2, templateId = mockTemplateId, name = "Work AM", startTime = LocalTime.of(9, 0), endTime = LocalTime.of(12, 0), targetSteps = 3000),
-            TimeBlock(id = 3, templateId = mockTemplateId, name = "Lunch", startTime = LocalTime.of(12, 0), endTime = LocalTime.of(13, 0), targetSteps = 1000),
-            TimeBlock(id = 4, templateId = mockTemplateId, name = "Work PM", startTime = LocalTime.of(13, 0), endTime = LocalTime.of(17, 0), targetSteps = 4000),
-            TimeBlock(id = 5, templateId = mockTemplateId, name = "Evening", startTime = LocalTime.of(17, 0), endTime = LocalTime.of(23, 59), targetSteps = 2000)
+            TimeBlock(id = 1, templateId = mockTemplateId, name = "Morning", startTime = LocalTime.of(6, 0), endTime = LocalTime.of(9, 0), targetSteps = 2000, notifyStart = false, notifyMid = false, notifyEnd = false),
+            TimeBlock(id = 2, templateId = mockTemplateId, name = "Work AM", startTime = LocalTime.of(9, 0), endTime = LocalTime.of(12, 0), targetSteps = 3000, notifyStart = false, notifyMid = false, notifyEnd = false),
+            TimeBlock(id = 3, templateId = mockTemplateId, name = "Lunch", startTime = LocalTime.of(12, 0), endTime = LocalTime.of(13, 0), targetSteps = 1000, notifyStart = false, notifyMid = false, notifyEnd = false),
+            TimeBlock(id = 4, templateId = mockTemplateId, name = "Work PM", startTime = LocalTime.of(13, 0), endTime = LocalTime.of(17, 0), targetSteps = 4000, notifyStart = false, notifyMid = false, notifyEnd = false),
+            TimeBlock(id = 5, templateId = mockTemplateId, name = "Evening", startTime = LocalTime.of(17, 0), endTime = LocalTime.of(23, 59), targetSteps = 2000, notifyStart = false, notifyMid = false, notifyEnd = false)
         )
         val mockTemplate = Template(id = mockTemplateId, name = "Mock Daily Template")
 
