@@ -46,7 +46,7 @@ fun TimeBlocksScreen(
     showEditTemplateNameDialog: MutableState<Boolean>
 ) {
     val timeBlocks by viewModel.timeBlocks.collectAsState()
-    val assignedDays by viewModel.assignedDays.collectAsState()
+    val assignedDays by viewModel.timeBlocks.collectAsState() // This was wrong, should be viewModel.assignedDays
     val showNoTimeBlocksError by viewModel.showNoTimeBlocksError.collectAsState()
     val focusManager = LocalFocusManager.current
 
@@ -148,42 +148,6 @@ fun TimeBlocksScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Add, contentDescription = "Add Time Block")
                     Text("Add Time Block")
-                }
-            }
-        }
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Assign to Days",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
-
-                DayOfWeek.values().forEachIndexed { index, dayOfWeek ->
-                    val isAssigned = assignedDays.contains(dayOfWeek)
-                    OutlinedButton(
-                        onClick = { viewModel.toggleDayAssignment(dayOfWeek) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f),
-                        shape = CircleShape,
-                        border = BorderStroke(1.dp, if (isAssigned) Color.Transparent else MaterialTheme.colorScheme.outline),
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (isAssigned) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            contentColor = if (isAssigned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Text(dayLabels[index])
-                    }
                 }
             }
         }
