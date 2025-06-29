@@ -12,13 +12,14 @@ import com.stepblocks.data.Template
 import com.stepblocks.viewmodel.ScheduleViewModel
 
 @Composable
-fun ScheduleScreen(viewModel: ScheduleViewModel) {
+fun ScheduleScreen(viewModel: ScheduleViewModel, contentPadding: PaddingValues) {
     val templates by viewModel.templates.collectAsState()
     val assignments by viewModel.assignments.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(contentPadding)
             .padding(16.dp)
     ) {
         Text("Assign Templates to Days", style = MaterialTheme.typography.headlineSmall)

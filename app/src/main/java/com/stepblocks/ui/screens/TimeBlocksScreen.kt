@@ -1,7 +1,6 @@
 package com.stepblocks.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,12 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,36 +28,36 @@ import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateWithTimeBlocks
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.viewmodel.ITimeBlocksViewModel
-import com.stepblocks.viewmodel.TimeBlocksViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
-import java.util.Calendar
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.clickable 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeBlocksScreen(
     viewModel: ITimeBlocksViewModel,
     onNavigateToAdd: () -> Unit,
-    onNavigateToEdit: (Long) -> Unit
+    onNavigateToEdit: (Long) -> Unit,
+    contentPadding: PaddingValues,
+    editableTemplateName: String,
+    totalSteps: Int,
+    showEditTemplateNameDialog: MutableState<Boolean>
 ) {
     val timeBlocks by viewModel.timeBlocks.collectAsState()
     val assignedDays by viewModel.assignedDays.collectAsState()
-    val editableTemplateName by viewModel.editableTemplateName.collectAsState()
-    val showNoTimeBlocksError by viewModel.showNoTimeBlocksError.collectAsState() // Observe error state
+    val showNoTimeBlocksError by viewModel.showNoTimeBlocksError.collectAsState()
     val focusManager = LocalFocusManager.current
-    
+
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var timeBlockToDelete by remember { mutableStateOf<TimeBlock?>(null) }
-    val totalSteps = remember(timeBlocks) {
-        timeBlocks.sumOf { it.targetSteps }
-    }
 
-    var showEditTitleDialog by remember { mutableStateOf(false) } 
+    var dialogTemplateName by remember { mutableStateOf(editableTemplateName) }
+
+    LaunchedEffect(editableTemplateName) {
+        dialogTemplateName = editableTemplateName
+    }
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -93,10 +87,9 @@ fun TimeBlocksScreen(
         )
     }
 
-    if (showEditTitleDialog) {
-        var dialogTemplateName by remember { mutableStateOf(editableTemplateName) }
+    if (showEditTemplateNameDialog.value) {
         AlertDialog(
-            onDismissRequest = { showEditTitleDialog = false },
+            onDismissRequest = { showEditTemplateNameDialog.value = false },
             title = { Text("Edit Template Name") },
             text = {
                 OutlinedTextField(
@@ -110,111 +103,86 @@ fun TimeBlocksScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.updateTemplateName(dialogTemplateName)
-                    showEditTitleDialog = false
+                    showEditTemplateNameDialog.value = false
                     focusManager.clearFocus()
                 }) {
                     Text("Save")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditTitleDialog = false }) {
+                TextButton(onClick = { showEditTemplateNameDialog.value = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        editableTemplateName,
-                        modifier = Modifier.clickable { showEditTitleDialog = true } 
-                    )
-                },
-                actions = {
-                    Text(text = "Total: $totalSteps steps")
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        },
-        floatingActionButton = {
-            // FAB removed as per user request
-        }
-    ) { innerPadding ->
-        LazyColumn(modifier = Modifier.padding(innerPadding)) {
-            // Display error message if no time blocks
-            if (showNoTimeBlocksError) {
-                item {
-                    Text(
-                        text = "This template must have at least one time block.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
-            }
-            // REMOVED INLINE TEMPLATE NAME EDITING UI
-            items(timeBlocks) { timeBlock ->
-                TimeBlockCard(
-                    timeBlock = timeBlock,
-                    onEdit = { onNavigateToEdit(timeBlock.id) },
-                    onDelete = {
-                        timeBlockToDelete = timeBlock
-                        showDeleteConfirmation = true
-                    }
-                )
-            }
-            item { // ADD TIME BLOCK BUTTON REMAINS HERE
-                Button(
-                    onClick = onNavigateToAdd,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Time Block")
-                        Text("Add Time Block")
-                    }
-                }
-            }
+    LazyColumn(modifier = Modifier.padding(contentPadding)) {
+        if (showNoTimeBlocksError) {
             item {
-                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Assign to Days",
-                    style = MaterialTheme.typography.headlineSmall,
+                    text = "This template must have at least one time block.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+            }
+        }
+        items(timeBlocks) { timeBlock ->
+            TimeBlockCard(
+                timeBlock = timeBlock,
+                onEdit = { onNavigateToEdit(timeBlock.id) },
+                onDelete = {
+                    timeBlockToDelete = timeBlock
+                    showDeleteConfirmation = true
+                }
+            )
+        }
+        item {
+            Button(
+                onClick = onNavigateToAdd,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Time Block")
+                    Text("Add Time Block")
+                }
+            }
+        }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Assign to Days",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
 
-                    DayOfWeek.values().forEachIndexed { index, dayOfWeek ->
-                        val isAssigned = assignedDays.contains(dayOfWeek)
-                        OutlinedButton(
-                            onClick = { viewModel.toggleDayAssignment(dayOfWeek) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f),
-                            shape = CircleShape,
-                            border = BorderStroke(1.dp, if (isAssigned) Color.Transparent else MaterialTheme.colorScheme.outline),
-                            contentPadding = PaddingValues(0.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (isAssigned) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (isAssigned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
-                        ) {
-                            Text(dayLabels[index])
-                        }
+                DayOfWeek.values().forEachIndexed { index, dayOfWeek ->
+                    val isAssigned = assignedDays.contains(dayOfWeek)
+                    OutlinedButton(
+                        onClick = { viewModel.toggleDayAssignment(dayOfWeek) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f),
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, if (isAssigned) Color.Transparent else MaterialTheme.colorScheme.outline),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (isAssigned) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            contentColor = if (isAssigned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(dayLabels[index])
                     }
                 }
             }
@@ -223,7 +191,6 @@ fun TimeBlocksScreen(
 }
 
 
-// Preview using a fake ViewModel that implements the interface
 class FakeTimeBlocksViewModel(
     fakeTemplateWithTimeBlocks: TemplateWithTimeBlocks?
 ) : ITimeBlocksViewModel {
@@ -279,9 +246,14 @@ fun TimeBlocksScreenPreview() {
     val dummyTemplate = Template(1, "Weekday")
     val dummyTemplateWithTimeBlocks = TemplateWithTimeBlocks(dummyTemplate, dummyTimeBlocks)
     val fakeViewModel = FakeTimeBlocksViewModel(dummyTemplateWithTimeBlocks)
+    val showDialogState = remember { mutableStateOf(false) }
     TimeBlocksScreen(
         viewModel = fakeViewModel,
         onNavigateToAdd = {},
-        onNavigateToEdit = {}
+        onNavigateToEdit = {},
+        contentPadding = PaddingValues(0.dp),
+        editableTemplateName = "Weekday Template",
+        totalSteps = 4000,
+        showEditTemplateNameDialog = showDialogState
     )
 }

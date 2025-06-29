@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +53,8 @@ import com.stepblocks.viewmodel.VibrationPattern
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(LocalContext.current.applicationContext as Application))
+    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(LocalContext.current.applicationContext as Application)),
+    contentPadding: PaddingValues
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -86,10 +88,10 @@ fun SettingsScreen(
         }
     }
 
-    // Scaffold removed to prevent nested scaffolds
     Column(
         modifier = Modifier
-            .fillMaxSize() // <-- new
+            .fillMaxSize()
+            .padding(contentPadding)
             .verticalScroll(rememberScrollState())
     ) {
         // Notifications Section
@@ -304,19 +306,4 @@ class SettingsViewModelFactory(private val application: Application) : ViewModel
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    val fakeApplication = Application() // This won't work correctly in a real preview
-    val db = AppDatabase.getDatabase(fakeApplication)
-    SettingsScreen(
-        viewModel = SettingsViewModel(
-            application = fakeApplication,
-            settingsRepository = SettingsRepository(db.settingsDao()),
-            templateDao = db.templateDao(),
-            timeBlockDao = db.timeBlockDao()
-        )
-    )
 }
