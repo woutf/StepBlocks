@@ -41,6 +41,9 @@ class HealthConnectRepository(private val context: Context) {
     private val _realtimeSteps = MutableStateFlow(0L)
     val realtimeSteps: StateFlow<Long> = _realtimeSteps.asStateFlow()
 
+    private val _connectionStatus = MutableStateFlow<ConnectionStatus>(ConnectionStatus.Disconnected)
+    val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
+
     suspend fun getLastKnownTime(): Instant {
         val request = ReadRecordsRequest(
             recordType = StepsRecord::class,
@@ -84,4 +87,14 @@ class HealthConnectRepository(private val context: Context) {
     fun updateRealtimeSteps(steps: Long) {
         _realtimeSteps.value = steps
     }
+
+    fun updateConnectionStatus(status: ConnectionStatus) {
+        _connectionStatus.value = status
+    }
+}
+
+sealed class ConnectionStatus {
+    object Connected : ConnectionStatus()
+    object Disconnected : ConnectionStatus()
+    object Syncing : ConnectionStatus()
 }

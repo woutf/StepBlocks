@@ -12,6 +12,7 @@ import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateDao
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.data.toDayOfWeek
+import com.stepblocks.repository.ConnectionStatus
 import com.stepblocks.repository.HealthConnectRepository // Import HealthConnectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +40,7 @@ data class TodayScreenUiState(
     val activeTimeBlock: TimeBlock? = null,
     val showPermissionRationale: Boolean = false,
     val showNoTemplateMessage: Boolean = false,
+    val connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
 )
 
 class TodayViewModel(
@@ -65,6 +67,11 @@ class TodayViewModel(
         viewModelScope.launch {
             healthConnectRepository.realtimeSteps.collect { steps ->
                 _uiState.value = _uiState.value.copy(totalDailySteps = steps)
+            }
+        }
+        viewModelScope.launch {
+            healthConnectRepository.connectionStatus.collect { status ->
+                _uiState.value = _uiState.value.copy(connectionStatus = status)
             }
         }
     }

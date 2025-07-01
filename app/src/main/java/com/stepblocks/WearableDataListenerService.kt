@@ -3,7 +3,9 @@ package com.stepblocks
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.WearableListenerService
+import com.stepblocks.repository.ConnectionStatus
 import com.stepblocks.repository.HealthConnectRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,13 +35,25 @@ class WearableDataListenerService : WearableListenerService() {
                     val stepDelta = dataMap.getInt("step_delta", 0)
                     
                     serviceScope.launch {
+                        healthConnectRepository.updateConnectionStatus(ConnectionStatus.Syncing) // Set status to syncing during data transfer
                         val now = Instant.now()
                         healthConnectRepository.syncStepsToHealthConnect(stepDelta, now, now)
                         healthConnectRepository.updateRealtimeSteps(healthConnectRepository.realtimeSteps.value + stepDelta)
+                        healthConnectRepository.updateConnectionStatus(ConnectionStatus.Connected) // Back to connected after sync
                     }
                 }
             }
         }
+    }
+
+    override fun onPeerConnected(peer: Node) {
+        super.onPeerConnected(peer)
+        healthConnectRepository.updateConnectionStatus(ConnectionStatus.Connected)
+    }
+
+    override fun onPeerDisconnected(peer: Node) {
+        super.onPeerDisconnected(peer)
+        healthConnectRepository.updateConnectionStatus(ConnectionStatus.Disconnected)
     }
 
     override fun onDestroy() {

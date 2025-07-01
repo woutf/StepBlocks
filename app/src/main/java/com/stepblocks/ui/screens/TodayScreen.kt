@@ -6,6 +6,9 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -14,10 +17,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -26,6 +32,7 @@ import com.stepblocks.data.Template
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import com.stepblocks.repository.ConnectionStatus
 
 @Composable
 fun TodayScreen(
@@ -38,7 +45,7 @@ fun TodayScreen(
     var showTemplateDialog by remember { mutableStateOf(false) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
-        contract = viewModel.getPermissionRequestContract(), // Changed from viewModel.healthConnectManager.getPermissionRequestContract()
+        contract = viewModel.getPermissionRequestContract(),
         onResult = viewModel::onPermissionsResult
     )
 
@@ -52,7 +59,7 @@ fun TodayScreen(
 
     LaunchedEffect(Unit) {
         if (!uiState.permissionsGranted && !uiState.showPermissionRationale) {
-            requestPermissionLauncher.launch(viewModel.permissions) // Changed from viewModel.healthConnectManager.permissions
+            requestPermissionLauncher.launch(viewModel.permissions)
         }
     }
 
@@ -73,9 +80,42 @@ fun TodayScreen(
             .padding(contentPadding)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top // Changed to Top for better layout control
+        verticalArrangement = Arrangement.Top
     ) {
+        // Connection Status Indicator
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            val (statusText, statusColor) = when (uiState.connectionStatus) {
+                ConnectionStatus.Connected -> "Connected" to Color.Green
+                ConnectionStatus.Disconnected -> "Disconnected" to Color.Yellow
+                ConnectionStatus.Syncing -> "Syncing..." to Color.Blue
+            }
 
+            val animatedAlpha by animateFloatAsState(
+                targetValue = if (uiState.connectionStatus == ConnectionStatus.Syncing) 0.5f else 1f,
+                animationSpec = if (uiState.connectionStatus == ConnectionStatus.Syncing) {
+                    infiniteRepeatable(animation = tween(durationMillis = 1000), repeatMode = androidx.compose.animation.core.RepeatMode.Reverse)
+                } else {
+                    tween(durationMillis = 0)
+                }, label = "ConnectionStatusAlpha"
+            )
+
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Connection Status",
+                tint = statusColor.copy(alpha = animatedAlpha),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = statusColor.copy(alpha = animatedAlpha)
+            )
+        }
 
         AnimatedVisibility(
             visible = !uiState.permissionsGranted && uiState.showPermissionRationale,
@@ -88,7 +128,7 @@ fun TodayScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(16.dp)
                 )
-                Button(onClick = { requestPermissionLauncher.launch(viewModel.permissions) }) { // Changed from viewModel.healthConnectManager.permissions
+                Button(onClick = { requestPermissionLauncher.launch(viewModel.permissions) }) {
                     Text("Grant Permissions")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -148,8 +188,8 @@ fun TodayScreen(
                         progress = dailyProgress,
                         modifier = Modifier.fillMaxSize(),
                         strokeWidth = 12.dp,
-                        color = MaterialTheme.colorScheme.primary, // Current color for progress
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant // Muted base color
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -182,8 +222,8 @@ fun TodayScreen(
                         progress = blockProgress,
                         modifier = Modifier.fillMaxSize(),
                         strokeWidth = 10.dp,
-                        color = MaterialTheme.colorScheme.secondary, // Current color for progress
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant // Muted base color
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
