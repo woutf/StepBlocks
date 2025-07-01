@@ -79,6 +79,9 @@ dependencies {
     // Health Connect
     implementation(libs.androidx.health.connect.client)
 
+    // Wear OS Data Layer
+    implementation(libs.play.services.wearable)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
