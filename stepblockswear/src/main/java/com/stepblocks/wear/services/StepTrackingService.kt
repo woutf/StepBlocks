@@ -9,19 +9,40 @@ import androidx.health.services.client.PassiveListenerCallback
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.PassiveListenerConfig
-import java.util.concurrent.Executor
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.Wearable
+import android.content.Context
+import android.os.BatteryManager
+import android.util.Log
+import com.google.android.gms.wearable.PutDataMapRequest // Added this import
+import java.util.concurrent.Executor // Added this import
 
 class StepTrackingService : Service() {
 
+    private val TAG = "StepTrackingService"
+
     private val healthServicesClient by lazy { HealthServices.getClient(this) }
     private val passiveMonitoringClient by lazy { healthServicesClient.passiveMonitoringClient }
+    private val dataClient: DataClient by lazy { Wearable.getDataClient(this) }
+    private val batteryManager by lazy { getSystemService(Context.BATTERY_SERVICE) as BatteryManager }
+
     private lateinit var mainExecutor: Executor
+
+    private var unsyncedStepCount: Long = 0
 
     private val passiveListenerCallback = object : PassiveListenerCallback {
         override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
             dataPoints.getData(DataType.STEPS_DAILY).forEach { dataPoint ->
                 val steps = dataPoint.value
-                // TODO: Handle step count
+                unsyncedStepCount += steps
+
+                val batteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                val stepThreshold = if (batteryLevel < 20) 1000L else 250L
+
+                if (unsyncedStepCount >= stepThreshold) {
+                    sendStepUpdateToPhone(unsyncedStepCount)
+                    unsyncedStepCount = 0
+                }
             }
         }
     }
@@ -42,6 +63,20 @@ class StepTrackingService : Service() {
         )
         
         return START_STICKY
+    }
+
+    private fun sendStepUpdateToPhone(stepDelta: Long) {
+        val putDataMapRequest = PutDataMapRequest.create("/step_update").apply { // Changed PutDataRequest to PutDataMapRequest
+            dataMap.putLong("step_delta", stepDelta)
+        }
+        val putDataRequest = putDataMapRequest.asPutDataRequest()
+        val task = dataClient.putDataItem(putDataRequest)
+
+        task.addOnSuccessListener { dataItem ->
+            Log.d(TAG, "Sent step update to phone: ${dataItem.uri}")
+        }.addOnFailureListener { e ->
+            Log.e(TAG, "Failed to send step update to phone", e)
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
