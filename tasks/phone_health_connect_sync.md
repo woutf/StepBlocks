@@ -8,4 +8,4 @@
 
 ## Work Done
 
-*No work done yet.*
+* Completed: The `syncStepsToHealthConnect` function in `HealthConnectRepository.kt` already correctly sets the `clientRecordId` and includes the device metadata, fulfilling these requirements.
