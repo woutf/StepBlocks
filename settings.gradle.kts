@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "StepBlocks"
 include(":app")
+include(":stepblockswear")
