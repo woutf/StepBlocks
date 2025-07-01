@@ -38,7 +38,7 @@ fun TodayScreen(
     var showTemplateDialog by remember { mutableStateOf(false) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
-        contract = viewModel.healthConnectManager.getPermissionRequestContract(),
+        contract = viewModel.getPermissionRequestContract(), // Changed from viewModel.healthConnectManager.getPermissionRequestContract()
         onResult = viewModel::onPermissionsResult
     )
 
@@ -52,7 +52,7 @@ fun TodayScreen(
 
     LaunchedEffect(Unit) {
         if (!uiState.permissionsGranted && !uiState.showPermissionRationale) {
-            requestPermissionLauncher.launch(viewModel.healthConnectManager.permissions)
+            requestPermissionLauncher.launch(viewModel.permissions) // Changed from viewModel.healthConnectManager.permissions
         }
     }
 
@@ -88,7 +88,7 @@ fun TodayScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(16.dp)
                 )
-                Button(onClick = { requestPermissionLauncher.launch(viewModel.healthConnectManager.permissions) }) {
+                Button(onClick = { requestPermissionLauncher.launch(viewModel.permissions) }) { // Changed from viewModel.healthConnectManager.permissions
                     Text("Grant Permissions")
                 }
                 Spacer(modifier = Modifier.height(8.dp))

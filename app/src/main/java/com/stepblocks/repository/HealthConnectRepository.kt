@@ -1,7 +1,10 @@
 package com.stepblocks.repository
 
 import android.content.Context
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
@@ -10,12 +13,33 @@ import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class HealthConnectRepository(private val context: Context) {
 
     private val healthConnectClient: HealthConnectClient by lazy {
         HealthConnectClient.getOrCreate(context)
     }
+
+    val permissions = setOf(
+        HealthPermission.getReadPermission(StepsRecord::class)
+    )
+
+    fun getPermissionRequestContract(): ActivityResultContract<Set<String>, Set<String>> {
+        return PermissionController.createRequestPermissionResultContract()
+    }
+
+    suspend fun hasAllPermissions(): Boolean {
+        return healthConnectClient
+            .permissionController
+            .getGrantedPermissions()
+            .containsAll(permissions)
+    }
+
+    private val _realtimeSteps = MutableStateFlow(0L)
+    val realtimeSteps: StateFlow<Long> = _realtimeSteps.asStateFlow()
 
     suspend fun getLastKnownTime(): Instant {
         val request = ReadRecordsRequest(
@@ -51,8 +75,13 @@ class HealthConnectRepository(private val context: Context) {
 
         try {
             healthConnectClient.insertRecords(listOf(stepsRecord))
+            _realtimeSteps.value += stepDelta.toLong()
         } catch (e: Exception) {
             // TODO: Implement retry logic with exponential backoff
         }
+    }
+
+    fun updateRealtimeSteps(steps: Long) {
+        _realtimeSteps.value = steps
     }
 }

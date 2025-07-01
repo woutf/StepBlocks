@@ -8,11 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.stepblocks.data.AppDatabase
 import com.stepblocks.data.DayAssignment
 import com.stepblocks.data.DayAssignmentDao
-import com.stepblocks.data.HealthConnectManager
 import com.stepblocks.data.Template
 import com.stepblocks.data.TemplateDao
 import com.stepblocks.data.TimeBlock
 import com.stepblocks.data.toDayOfWeek
+import com.stepblocks.repository.HealthConnectRepository // Import HealthConnectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,10 +43,14 @@ data class TodayScreenUiState(
 
 class TodayViewModel(
     application: Application,
-    val healthConnectManager: HealthConnectManager,
+    private val healthConnectRepository: HealthConnectRepository, // Changed from HealthConnectManager
     private val dayAssignmentDao: DayAssignmentDao,
     private val templateDao: TemplateDao,
 ) : AndroidViewModel(application) {
+
+    val permissions = healthConnectRepository.permissions // Expose permissions
+
+    fun getPermissionRequestContract() = healthConnectRepository.getPermissionRequestContract() // Expose permission request contract
 
     private val _uiState = MutableStateFlow(TodayScreenUiState())
     val uiState: StateFlow<TodayScreenUiState> = _uiState.asStateFlow()
@@ -58,11 +62,16 @@ class TodayViewModel(
         viewModelScope.launch {
             loadData()
         }
+        viewModelScope.launch {
+            healthConnectRepository.realtimeSteps.collect { steps ->
+                _uiState.value = _uiState.value.copy(totalDailySteps = steps)
+            }
+        }
     }
 
     suspend fun loadData() {
 
-        val hasPermissions = healthConnectManager.hasAllPermissions()
+        val hasPermissions = healthConnectRepository.hasAllPermissions() // Use repository
         _uiState.value = _uiState.value.copy(
             permissionsGranted = hasPermissions,
             showPermissionRationale = !hasPermissions,
@@ -76,7 +85,7 @@ class TodayViewModel(
 
     fun onPermissionsResult(granted: Set<String>) {
         _uiState.value = _uiState.value.copy(
-            permissionsGranted = healthConnectManager.permissions.all { it in granted },
+            permissionsGranted = healthConnectRepository.permissions.all { it in granted }, // Use repository
             showPermissionRationale = false
         )
         if (uiState.value.permissionsGranted) {
@@ -93,7 +102,7 @@ class TodayViewModel(
     fun assignTemplateToToday(templateId: Long) {
         viewModelScope.launch {
             val today = LocalDate.now().dayOfWeek.toDayOfWeek()
-            dayAssignmentDao.upsert(DayAssignment(today, templateId)) // Changed order of arguments
+            dayAssignmentDao.upsert(DayAssignment(today, templateId))
             _uiState.value = _uiState.value.copy(showNoTemplateMessage = false)
             refreshData()
         }
@@ -103,7 +112,7 @@ class TodayViewModel(
 
 
         val today = LocalDate.now()
-        val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
+        // Removed: val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
         val now = ZonedDateTime.now(ZoneId.systemDefault()).toInstant()
         val dayOfWeek = today.dayOfWeek.toDayOfWeek()
 
@@ -135,18 +144,11 @@ class TodayViewModel(
             dailyTarget = timeBlocks.sumOf { it.targetSteps }
         )
 
-        val totalDailySteps = healthConnectManager.readSteps(startOfDay, now)
-
         val activeBlock = timeBlocks.find { block ->
             val blockStartInstant = ZonedDateTime.of(today, block.startTime, ZoneId.systemDefault()).toInstant()
             val blockEndInstant = ZonedDateTime.of(today, block.endTime, ZoneId.systemDefault()).toInstant()
             now.isAfter(blockStartInstant) && now.isBefore(blockEndInstant)
         }
-
-        val currentBlockSteps = if (activeBlock != null) {
-            val blockStartInstant = ZonedDateTime.of(today, activeBlock.startTime, ZoneId.systemDefault()).toInstant()
-            healthConnectManager.readSteps(blockStartInstant, now)
-        } else null
 
         val timeRemaining = if (activeBlock != null) {
             val blockEndDateTime = ZonedDateTime.of(today, activeBlock.endTime, ZoneId.systemDefault())
@@ -159,11 +161,11 @@ class TodayViewModel(
         } else "No active block"
 
         _uiState.value = _uiState.value.copy(
-            totalDailySteps = totalDailySteps ?: 0L,
+            // totalDailySteps will now be updated by the StateFlow collection
             activeTimeBlock = activeBlock,
             currentBlockName = activeBlock?.name ?: "No active block",
             currentBlockTarget = activeBlock?.targetSteps ?: 0,
-            currentBlockSteps = currentBlockSteps ?: 0L,
+            currentBlockSteps = 0L, // Current block steps are not directly tied to realtimeSteps, needs separate logic if required
             timeRemainingInBlock = timeRemaining,
             isLoading = false
         )
@@ -173,12 +175,13 @@ class TodayViewModel(
 class TodayViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TodayViewModel::class.java)) {
-            val healthConnectManager = HealthConnectManager(application.applicationContext)
+            // Instantiate HealthConnectRepository instead of HealthConnectManager
+            val healthConnectRepository = HealthConnectRepository(application.applicationContext)
             val db = AppDatabase.getDatabase(application)
             @Suppress("UNCHECKED_CAST")
             return TodayViewModel(
                 application = application,
-                healthConnectManager = healthConnectManager,
+                healthConnectRepository = healthConnectRepository, // Pass repository
                 dayAssignmentDao = db.dayAssignmentDao(),
                 templateDao = db.templateDao()
             ) as T
