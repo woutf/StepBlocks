@@ -13,6 +13,7 @@ import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +57,25 @@ class HealthConnectRepository(private val context: Context) {
         return response.records.maxOfOrNull { it.endTime } ?: Instant.now().minus(1, ChronoUnit.DAYS)
     }
 
+    private suspend fun <T> withRetry(
+        times: Int = 5,
+        initialDelay: Long = 2000,
+        maxDelay: Long = 60000,
+        block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        repeat(times - 1) {
+            try {
+                return block()
+            } catch (e: Exception) {
+                // you can log the exception here
+            }
+            delay(currentDelay)
+            currentDelay = (currentDelay * 2).coerceAtMost(maxDelay)
+        }
+        return block() // last attempt
+    }
+
     suspend fun syncStepsToHealthConnect(stepDelta: Int, startTime: Instant, endTime: Instant) {
         val recordId = "stepblocks-steps-${startTime.toEpochMilli()}"
 
@@ -77,10 +97,12 @@ class HealthConnectRepository(private val context: Context) {
         )
 
         try {
-            healthConnectClient.insertRecords(listOf(stepsRecord))
+            withRetry {
+                healthConnectClient.insertRecords(listOf(stepsRecord))
+            }
             _realtimeSteps.value += stepDelta.toLong()
         } catch (e: Exception) {
-            // TODO: Implement retry logic with exponential backoff
+            // Handle final exception after retries
         }
     }
 
