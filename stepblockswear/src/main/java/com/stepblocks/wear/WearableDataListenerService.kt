@@ -39,7 +39,7 @@ class WearableDataListenerService : WearableListenerService() {
                     val dataMapArrayList = ArrayList<DataMap>()
                     historicalData.forEach {
                         val data = DataMap()
-                        data.putInt("step_delta", it.stepDelta)
+                        data.putLong("step_delta", it.stepDelta)
                         data.putLong("timestamp", it.timestamp)
                         dataMapArrayList.add(data)
                     }

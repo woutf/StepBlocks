@@ -7,6 +7,6 @@ import androidx.room.PrimaryKey
 data class CachedStepEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val timestamp: Long, // End time of the interval
-    val stepDelta: Int,  // Incremental steps for this 15-minute interval
+    val stepDelta: Long,  // Incremental steps for this 15-minute interval
     val synced: Boolean = false
 )

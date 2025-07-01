@@ -14,8 +14,9 @@ import com.google.android.gms.wearable.Wearable
 import android.content.Context
 import android.os.BatteryManager
 import android.util.Log
-import com.google.android.gms.wearable.PutDataMapRequest // Added this import
-import java.util.concurrent.Executor // Added this import
+import com.google.android.gms.wearable.PutDataMapRequest
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.concurrent.Executor
 
 class StepTrackingService : Service() {
 
@@ -28,20 +29,22 @@ class StepTrackingService : Service() {
 
     private lateinit var mainExecutor: Executor
 
-    private var unsyncedStepCount: Long = 0
+    companion object {
+        val unsyncedStepCount = MutableStateFlow(0L)
+    }
 
     private val passiveListenerCallback = object : PassiveListenerCallback {
         override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
             dataPoints.getData(DataType.STEPS_DAILY).forEach { dataPoint ->
                 val steps = dataPoint.value
-                unsyncedStepCount += steps
+                unsyncedStepCount.value += steps
 
                 val batteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
                 val stepThreshold = if (batteryLevel < 20) 1000L else 250L
 
-                if (unsyncedStepCount >= stepThreshold) {
-                    sendStepUpdateToPhone(unsyncedStepCount)
-                    unsyncedStepCount = 0
+                if (unsyncedStepCount.value >= stepThreshold) {
+                    sendStepUpdateToPhone(unsyncedStepCount.value)
+                    unsyncedStepCount.value = 0
                 }
             }
         }
@@ -66,7 +69,7 @@ class StepTrackingService : Service() {
     }
 
     private fun sendStepUpdateToPhone(stepDelta: Long) {
-        val putDataMapRequest = PutDataMapRequest.create("/step_update").apply { // Changed PutDataRequest to PutDataMapRequest
+        val putDataMapRequest = PutDataMapRequest.create("/step_update").apply {
             dataMap.putLong("step_delta", stepDelta)
         }
         val putDataRequest = putDataMapRequest.asPutDataRequest()
