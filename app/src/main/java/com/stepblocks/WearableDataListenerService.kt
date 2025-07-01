@@ -31,7 +31,7 @@ class WearableDataListenerService : WearableListenerService() {
         super.onCreate()
         Log.d(TAG, "WearableDataListenerService onCreate called")
         Log.d(TAG, "Service created (onCreate)")
-        healthConnectRepository = HealthConnectRepository(applicationContext)
+        healthConnectRepository = HealthConnectRepository.getInstance(applicationContext)
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     }
 

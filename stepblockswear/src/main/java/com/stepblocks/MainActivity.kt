@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
             val nodes = Wearable.getNodeClient(this@MainActivity).connectedNodes.await()
             for (node in nodes) {
                 Wearable.getMessageClient(this@MainActivity)
-                    .sendMessage(node.id, "/test", "hello".toByteArray())
+                    .sendMessage(node.id, "/peer_connected", null)
             }
         }
         val serviceIntent = Intent(this, StepTrackingService::class.java)

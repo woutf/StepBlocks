@@ -182,13 +182,13 @@ class TodayViewModel(
 class TodayViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TodayViewModel::class.java)) {
-            // Instantiate HealthConnectRepository instead of HealthConnectManager
-            val healthConnectRepository = HealthConnectRepository(application.applicationContext)
-            val db = AppDatabase.getDatabase(application)
+            // Use singleton instance
+            val healthConnectRepository = com.stepblocks.repository.HealthConnectRepository.getInstance(application.applicationContext)
+            val db = com.stepblocks.data.AppDatabase.getDatabase(application)
             @Suppress("UNCHECKED_CAST")
             return TodayViewModel(
                 application = application,
-                healthConnectRepository = healthConnectRepository, // Pass repository
+                healthConnectRepository = healthConnectRepository, // Pass singleton
                 dayAssignmentDao = db.dayAssignmentDao(),
                 templateDao = db.templateDao()
             ) as T

@@ -21,7 +21,16 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "HealthConnectRepo"
 
-class HealthConnectRepository(private val context: Context) {
+class HealthConnectRepository private constructor(private val context: Context) {
+    companion object {
+        @Volatile
+        private var INSTANCE: HealthConnectRepository? = null
+        fun getInstance(context: Context): HealthConnectRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: HealthConnectRepository(context.applicationContext).also { INSTANCE = it }
+            }
+        }
+    }
 
     private val healthConnectClient: HealthConnectClient by lazy {
         HealthConnectClient.getOrCreate(context)
