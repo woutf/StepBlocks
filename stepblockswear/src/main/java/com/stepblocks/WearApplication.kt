@@ -1,6 +1,7 @@
-package com.stepblocks.wear
+package com.stepblocks
 
 import android.app.Application
+import android.util.Log
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -22,6 +23,7 @@ class WearApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("WearApp", "WearApplication onCreate called")
         scheduleWorkers()
     }
 
@@ -49,10 +51,16 @@ class WearApplication : Application(), Configuration.Provider {
 }
 
 class AppWorkerFactory(private val context: Context) : WorkerFactory() {
-    override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker? {
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters
+    ): ListenableWorker? {
         return when (workerClassName) {
-            StepCacheWorker::class.java.name -> StepCacheWorker(appContext, workerParameters)
-            StepPruningWorker::class.java.name -> StepPruningWorker(appContext, workerParameters)
+            StepCacheWorker::class.java.name ->
+                StepCacheWorker(appContext, workerParameters)
+            StepPruningWorker::class.java.name ->
+                StepPruningWorker(appContext, workerParameters)
             else -> null
         }
     }

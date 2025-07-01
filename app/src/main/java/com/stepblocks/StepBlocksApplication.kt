@@ -1,7 +1,7 @@
-
 package com.stepblocks
 
 import android.app.Application
+import android.util.Log
 import com.stepblocks.data.AppDatabase
 import com.stepblocks.data.HealthConnectManager
 import com.stepblocks.repository.OfflineTemplateRepository
@@ -14,4 +14,9 @@ class StepBlocksApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
     val repository: TemplateRepository by lazy { OfflineTemplateRepository(database) }
     val healthConnectManager by lazy { HealthConnectManager(this) }
+
+    override fun onCreate() {
+        super.onCreate()
+        Log.d("StepBlocksApp", "StepBlocksApplication onCreate called")
+    }
 }

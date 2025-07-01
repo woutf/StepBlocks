@@ -83,6 +83,8 @@ dependencies {
     // Wear OS Data Layer
     implementation(libs.play.services.wearable)
     implementation(libs.play.services.tasks)
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
+    wearApp(project(":stepblockswear"))  // Link to the wear module
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

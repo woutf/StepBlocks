@@ -1,6 +1,7 @@
 package com.stepblocks.repository
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -17,6 +18,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+private const val TAG = "HealthConnectRepo"
 
 class HealthConnectRepository(private val context: Context) {
 
@@ -54,7 +57,9 @@ class HealthConnectRepository(private val context: Context) {
             )
         )
         val response = healthConnectClient.readRecords(request)
-        return response.records.maxOfOrNull { it.endTime } ?: Instant.now().minus(1, ChronoUnit.DAYS)
+        val lastTime = response.records.maxOfOrNull { it.endTime } ?: Instant.now().minus(1, ChronoUnit.DAYS)
+        Log.d(TAG, "Last known time: $lastTime")
+        return lastTime
     }
 
     private suspend fun <T> withRetry(
@@ -68,7 +73,7 @@ class HealthConnectRepository(private val context: Context) {
             try {
                 return block()
             } catch (e: Exception) {
-                // you can log the exception here
+                Log.w(TAG, "Retryable error: ${e.message}")
             }
             delay(currentDelay)
             currentDelay = (currentDelay * 2).coerceAtMost(maxDelay)
@@ -101,17 +106,20 @@ class HealthConnectRepository(private val context: Context) {
                 healthConnectClient.insertRecords(listOf(stepsRecord))
             }
             _realtimeSteps.value += stepDelta.toLong()
+            Log.d(TAG, "Synced $stepDelta steps to Health Connect")
         } catch (e: Exception) {
-            // Handle final exception after retries
+            Log.e(TAG, "Failed to sync steps to Health Connect", e)
         }
     }
 
     fun updateRealtimeSteps(steps: Long) {
         _realtimeSteps.value = steps
+        Log.d(TAG, "Realtime steps updated to: $steps")
     }
 
     fun updateConnectionStatus(status: ConnectionStatus) {
         _connectionStatus.value = status
+        Log.d(TAG, "Connection status updated to: $status")
     }
 }
 
