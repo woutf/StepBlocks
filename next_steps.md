@@ -126,11 +126,15 @@ This is the most critical part for data integrity. Records written to Health Con
             endTime = endTime,
             startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(startTime),
             endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(endTime),
-            metadata = Metadata.Builder()
-                .setDevice(Device.Builder().setManufacturer("StepBlocks").setModel("Pixel Watch").setType(Device.TYPE_WATCH).build())
-                .setClientRecordId(recordId)
-                .setClientRecordVersion(1) // Increment this version if you later update this same record
-                .build()
+            metadata = Metadata.activelyRecorded(
+                clientRecordId = recordId,
+                clientRecordVersion = 1,
+                device = Device(
+                    manufacturer = "StepBlocks",
+                    model = "Pixel Watch",
+                    type = Device.TYPE_WATCH
+                )
+            )
         )
 
         try {
@@ -170,5 +174,4 @@ This is the most critical part for data integrity. Records written to Health Con
 3.  **End-to-End Manual Testing:**
     * **Scenario 1 (Online):** Walk with both devices connected and verify near-instant UI updates on the phone.
     * **Scenario 2 (Offline):** Turn off Bluetooth on the phone, walk several hundred steps with the watch, then reconnect and verify that the phone UI updates correctly and a batch sync occurs.
-    * **Scenario 3 (Priority):** Ensure both Fitbit and StepBlocks have written data. Verify that by changing the priority in Health Connect settings, the total steps reported by a third-party reader app changes accordingly.
-
+    * **Scenario 3 (Priority):** Ensure both Fitbit and StepBlocks have written data. Verify that by changing the priority in Health Connect settings, the a third-party reader app changes accordingly.

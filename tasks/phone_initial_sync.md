@@ -8,4 +8,8 @@
 
 ## Work Done
 
-*No work done yet.*
+*   Implemented the `getLastKnownTime()` function in `HealthConnectRepository.kt`.
+*   This function queries Health Connect for all `StepsRecord` entries from the last 30 days.
+*   It finds the most recent `endTime` among all records and returns it.
+*   If no records are found, it returns a default value of 24 hours ago.
+*   This logic successfully fulfills the requirement to find the last known sync time.
