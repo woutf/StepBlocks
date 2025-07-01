@@ -59,4 +59,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.play.services.tasks)
+    implementation(libs.kotlinx.coroutines.play.services)
 }

@@ -64,6 +64,7 @@ dependencies {
 
     // Kotlinx Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Kotlinx Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -81,6 +82,7 @@ dependencies {
 
     // Wear OS Data Layer
     implementation(libs.play.services.wearable)
+    implementation(libs.play.services.tasks)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
