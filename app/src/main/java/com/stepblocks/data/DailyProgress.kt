@@ -8,5 +8,6 @@ import java.util.Date
 data class DailyProgress(
     @PrimaryKey val date: Date,
     val templateId: String,
-    val blockProgress: List<BlockProgress>
+    val blockProgress: List<BlockProgress>,
+    val lastStepTotal: Long = 0L
 )

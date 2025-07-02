@@ -8,12 +8,34 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.stepblocks.data.AppDatabase
+import com.stepblocks.data.DailyProgress
 import com.stepblocks.navigation.AppNavigation
 import com.stepblocks.ui.theme.StepBlocksTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Midnight reset logic
+        CoroutineScope(Dispatchers.IO).launch {
+            val today = LocalDate.now()
+            val date = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant())
+            val db = AppDatabase.getDatabase(applicationContext)
+            val dailyProgressDao = db.dailyProgressDao()
+            val dailyProgress = dailyProgressDao.getDailyProgressByDate(date)
+            if (dailyProgress == null) {
+                dailyProgressDao.insertDailyProgress(
+                    DailyProgress(date = date, templateId = "", blockProgress = emptyList(), lastStepTotal = 0L)
+                )
+            }
+        }
 
         setContent {
             StepBlocksTheme {
