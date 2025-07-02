@@ -20,13 +20,15 @@ class WearableDataListenerService : WearableListenerService() {
 
     override fun onPeerConnected(peer: Node) {
         Log.d(TAG, "Peer connected: ${peer.displayName}")
+        // Send latest step count on reconnect
+        val steps = StepTrackingService.currentSteps.value
         serviceScope.launch {
             try {
                 Wearable.getMessageClient(this@WearableDataListenerService)
-                    .sendMessage(peer.id, "/peer_connected", null)
+                    .sendMessage(peer.id, "/steps_update", steps.toString().toByteArray())
                     .await()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send /peer_connected message", e)
+                Log.e(TAG, "Failed to send /steps_update message", e)
             }
         }
     }

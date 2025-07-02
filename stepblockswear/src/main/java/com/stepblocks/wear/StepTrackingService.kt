@@ -32,9 +32,6 @@ class StepTrackingService : Service() {
     private var lastSentSteps = 0L
     private val STEP_UPDATE_THRESHOLD = 250L
 
-    private val _currentSteps = MutableStateFlow(0L)
-    val currentSteps = _currentSteps.asStateFlow()
-
     override fun onCreate() {
         super.onCreate()
         healthServicesClient = HealthServices.getClient(this)
@@ -86,7 +83,7 @@ class StepTrackingService : Service() {
                 val stepsDataPoint = dataPoints.getData(DataType.STEPS)
                 if (stepsDataPoint.isNotEmpty()) {
                     val steps = stepsDataPoint.last().value
-                    _currentSteps.value = steps
+                    currentSteps.value = steps
                     if (steps - lastSentSteps >= STEP_UPDATE_THRESHOLD) {
                         lastSentSteps = steps
                         sendStepsToPhone(steps)
