@@ -13,20 +13,24 @@ import androidx.health.services.client.data.DataType
 import androidx.health.services.client.PassiveListenerCallback
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.PassiveListenerConfig
+import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class StepTrackingService : Service() {
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
-
     private lateinit var healthServicesClient: HealthServicesClient
     private lateinit var passiveListenerCallback: PassiveListenerCallback
+
+    private var lastSentSteps = 0L
+    private val STEP_UPDATE_THRESHOLD = 250L
 
     private val _currentSteps = MutableStateFlow(0L)
     val currentSteps = _currentSteps.asStateFlow()
@@ -44,9 +48,7 @@ class StepTrackingService : Service() {
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
@@ -74,7 +76,7 @@ class StepTrackingService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Step Tracking")
             .setContentText("Tracking your steps in the background")
-            .setSmallIcon(android.R.drawable.ic_menu_compass) // Replace with a relevant icon
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setContentIntent(pendingIntent)
     }
 
@@ -85,8 +87,10 @@ class StepTrackingService : Service() {
                 if (stepsDataPoint.isNotEmpty()) {
                     val steps = stepsDataPoint.last().value
                     _currentSteps.value = steps
-                    // TODO: Implement smart update & data transmission logic (FR1.2)
-                    // TODO: Implement local caching (FR1.3)
+                    if (steps - lastSentSteps >= STEP_UPDATE_THRESHOLD) {
+                        lastSentSteps = steps
+                        sendStepsToPhone(steps)
+                    }
                 }
             }
         }
@@ -98,9 +102,26 @@ class StepTrackingService : Service() {
                 val config = PassiveListenerConfig.builder()
                     .setDataTypes(setOf(DataType.STEPS))
                     .build()
-                healthServicesClient.passiveMonitoringClient.setPassiveListenerCallback(config, passiveListenerCallback)
+                healthServicesClient.passiveMonitoringClient
+                    .setPassiveListenerCallback(config, passiveListenerCallback)
             } catch (e: Exception) {
-                // TODO: Handle exceptions, e.g., permissions not granted
+                // Handle exceptions, e.g., permissions not granted
+            }
+        }
+    }
+
+    private fun sendStepsToPhone(steps: Long) {
+        serviceScope.launch {
+            try {
+                val nodes = Wearable.getNodeClient(this@StepTrackingService).connectedNodes.await()
+                for (node in nodes) {
+                    val stepsBytes = steps.toString().toByteArray()
+                    Wearable.getMessageClient(this@StepTrackingService)
+                        .sendMessage(node.id, "/steps_update", stepsBytes)
+                        .await()
+                }
+            } catch (e: Exception) {
+                // Optionally log or handle error
             }
         }
     }
@@ -108,5 +129,6 @@ class StepTrackingService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "step_tracking_channel"
+        val currentSteps = MutableStateFlow(0L) // For UI observation
     }
 }
